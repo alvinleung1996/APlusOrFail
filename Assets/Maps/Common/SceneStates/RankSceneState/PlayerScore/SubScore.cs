@@ -12,40 +12,29 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         private Image image;
         private FractionLayoutElement layoutElement;
 
-        private bool started;
         private IMapStat mapStat;
-        private int playerOrder = -1;
-        private int scoreOrder = -1;
+        private int playerOrder;
+        private int scoreOrder;
 
-
-        private void Start()
+        private void Awake()
         {
-            started = true;
-
             image = GetComponent<Image>();
             layoutElement = GetComponent<FractionLayoutElement>();
-
             UpdateSubScore(mapStat, playerOrder, scoreOrder);
-            mapStat = null; playerOrder = -1; scoreOrder = -1;
         }
 
         public void UpdateSubScore(IMapStat mapStat, int playerOrder, int scoreOrder)
         {
-            if (started)
+            this.mapStat = mapStat;
+            this.playerOrder = playerOrder;
+            this.scoreOrder = scoreOrder;
+
+            gameObject.SetActive(mapStat != null);
+            if (mapStat != null)
             {
-                gameObject.SetActive(mapStat != null);
-                if (mapStat != null)
-                {
-                    IPlayerScoreChange stat = mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges).Skip(scoreOrder).First();
-                    layoutElement.numeratorWidth = Mathf.Max(stat.scoreDelta, 0);
-                    image.color = Random.ColorHSV(0, 1, 1, 1, 1, 1);
-                }
-            }
-            else
-            {
-                this.mapStat = mapStat;
-                this.playerOrder = playerOrder;
-                this.scoreOrder = scoreOrder;
+                IPlayerScoreChange stat = mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges).Skip(scoreOrder).First();
+                layoutElement.numeratorWidth = Mathf.Max(stat.scoreDelta, 0);
+                image.color = stat.rankColor;
             }
         }
     }

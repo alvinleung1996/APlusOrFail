@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace APlusOrFail.Character
 {
+    using Maps;
+
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody2D), typeof(CharacterPlayer), typeof(CharacterSprite))]
     public class CharacterControl : PropertyFieldBehavior
     {
@@ -17,42 +20,18 @@ namespace APlusOrFail.Character
         private static readonly int animatorJumpHash = Animator.StringToHash("jump");
         private static readonly int animatorCurrentWheelSpeedHash = Animator.StringToHash("currentWheelSpeed");
         private static readonly int animatorGravitationalVelocityHash = Animator.StringToHash("gravitationalVelocity");
-        
-
-        public class HealthChange : IPlayerHealthChange
-        {
-            public int healthDelta { get; private set; }
-
-            public HealthChange(int healthDelta)
-            {
-                this.healthDelta = healthDelta;
-            }
-        }
-
-        public class ScoreChange : IPlayerScoreChange
-        {
-            public int scoreDelta { get; private set; }
-
-            public ScoreChange(int scoreDelta)
-            {
-                this.scoreDelta = scoreDelta;
-            }
-        }
 
 
         public float maxSpeed = 1.5f;
         public float squatMaxSpeed = 2f;
         public int initialHealth;
         
-        [EditorPropertyField]
-        public int health { get; private set; }
-        
-        [EditorPropertyField]
-        public bool won { get; private set; }
+        [EditorPropertyField] public int health { get; private set; }
+        [EditorPropertyField] public bool won { get; private set; }
+        [EditorPropertyField] public GameObject wonCause { get; private set; }
 
         private bool _ended;
-        [EditorPropertyField]
-        public bool ended
+        [EditorPropertyField] public bool ended
         {
             get
             {
@@ -309,18 +288,21 @@ namespace APlusOrFail.Character
         }
 
 
-        public void ChangeHealth(IPlayerHealthChange healthChange)
+        public int ChangeHealth(IPlayerHealthChange healthChange)
         {
             if (!won)
             {
                 int newHealth = Mathf.Max(health + healthChange.healthDelta, 0);
                 if (newHealth != health)
                 {
-                    _healthChanges.Add(new HealthChange(newHealth - health));
+                    int delta = newHealth - health;
+                    _healthChanges.Add(new PlayerHealthChange(healthChange.reason, delta, healthChange.cause));
                     health = newHealth;
                     UpdateEnded();
+                    return delta;
                 }
             }
+            return 0;
         }
 
         public void ChangeScore(IPlayerScoreChange scoreChange)
@@ -328,9 +310,10 @@ namespace APlusOrFail.Character
             _scoreChanges.Add(scoreChange);
         }
 
-        public void Win()
+        public void Win(GameObject cause)
         {
             won = true;
+            wonCause = cause;
             UpdateEnded();
         }
 

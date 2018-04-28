@@ -4,9 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
 
-namespace APlusOrFail
+namespace APlusOrFail.Components
 {
     using Character;
+    using Maps;
 
     [DisallowMultipleComponent]
     [ExecuteInEditMode]
@@ -15,13 +16,11 @@ namespace APlusOrFail
     {
         private class GridObject
         {
-            private readonly MapArea outer;
             public readonly ReadOnlyCollection<RectInt> rects;
             public readonly GameObject obj;
 
-            public GridObject(MapArea outer, IEnumerable<RectInt> rects, GameObject obj)
+            public GridObject(IEnumerable<RectInt> rects, GameObject obj)
             {
-                this.outer = outer;
                 this.rects = new ReadOnlyCollection<RectInt>(rects.ToList());
                 this.obj = obj;
             }
@@ -97,7 +96,7 @@ namespace APlusOrFail
             if (collision.gameObject.layer == LayerId.Characters)
             {
                 CharacterControl charControl = collision.gameObject.GetComponentInParent<CharacterControl>();
-                charControl.ChangeHealth(new CharacterControl.HealthChange(-charControl.health));
+                charControl.ChangeHealth(new PlayerHealthChange(PlayerHealthChangeReason.ExitArea, -charControl.health, gameObject));
             }
         }
 
@@ -169,7 +168,7 @@ namespace APlusOrFail
                 throw new ArgumentException($"({tempRect.Value}) has already been occupied");
             }
             
-            GridObject gridObject = new GridObject(this, gridRects, obj);
+            GridObject gridObject = new GridObject(gridRects, obj);
 
             foreach (RectInt gridRect in gridRects)
             {
@@ -235,7 +234,7 @@ namespace APlusOrFail
         private bool IsWithinRange(RectInt gridRect)
         {
             return gridRect.xMin >= 0 && gridRect.yMin >= 0 &&
-                   gridRect.xMax < grid.GetLength(0) && gridRect.yMax < grid.GetLength(1);
+                   gridRect.xMax <= grid.GetLength(0) && gridRect.yMax <= grid.GetLength(1);
         }
     }
 }

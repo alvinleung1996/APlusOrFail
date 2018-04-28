@@ -69,7 +69,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1951835064020352}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3, y: -2, z: 0}
+  m_LocalPosition: {x: -24, y: -15, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4504064664754976}
@@ -156,9 +156,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _minWidth: 1
-  _maxWidth: 4
+  _maxWidth: 5
+  _minHeight: 1
+  _maxHeight: 5
   _width: 1
-  _color: {r: 0.71323526, g: 0.36891472, b: 0, a: 1}
+  _height: 1
+  _color: {r: 0.39705884, g: 0.3240701, b: 0.17809257, a: 1}
   brickRect: {fileID: 114272417119514388}
   brickRenderer: {fileID: 212642606704665748}
 --- !u!114 &114819285321874754
@@ -172,7 +175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cfe3b30505929b47a180c7fc930356f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridPosition: {x: 22, y: 23}
+  _gridPosition: {x: 1, y: 0}
   _rotation: 0
   _registerInGrid: 1
 --- !u!114 &114878050422204268
@@ -219,11 +222,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 426872997
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 8241bb081fe581a4b99d21388b753db4, type: 3}
-  m_Color: {r: 0.71323526, g: 0.36891472, b: 0, a: 1}
+  m_Color: {r: 0.39705884, g: 0.3240701, b: 0.17809257, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

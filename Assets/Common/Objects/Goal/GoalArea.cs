@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace APlusOrFail.Objects.Goal
+namespace APlusOrFail.Objects
 {
     using Character;
 
@@ -13,7 +13,7 @@ namespace APlusOrFail.Objects.Goal
             CharacterControl charControl;
             if (collision.gameObject.layer == LayerId.Characters && (charControl = collision.gameObject.GetComponentInParent<CharacterControl>()) != null)
             {
-                charControl.Win();
+                charControl.Win(gameObject);
             }
         }
     }

@@ -28,7 +28,7 @@ namespace APlusOrFail.Setup.States.CharacterSelectionState
             HideUI();
         }
 
-        protected override Task OnLoad(ISceneState unloadedSceneState, object result)
+        protected override Task OnLoad()
         {
             cancelled = false;
             selectedCharacter = null;

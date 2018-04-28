@@ -27,7 +27,7 @@ namespace APlusOrFail
 
         SceneStatePhase phase { get; }
 
-        Task Load(object arg, ISceneState unloadedSceneState, object result);
+        Task Load(SceneStateManager manager, object arg);
 
         Task MakeVisible(ISceneState unloadedSceneState, object result);
 
@@ -42,7 +42,7 @@ namespace APlusOrFail
 
     public interface ISceneState<TArg, TResult> : ISceneState
     {
-        Task Load(TArg arg, ISceneState unloadedSceneState, object result);
+        Task Load(SceneStateManager manager, TArg arg);
     }
 
     public class SceneStateBehavior<TArg, TResult> : MonoBehaviour, ISceneState<TArg, TResult>
@@ -51,14 +51,16 @@ namespace APlusOrFail
         public Type resultType => typeof(TResult);
         
         public SceneStatePhase phase { get; private set; } = SceneStatePhase.Initialized;
+        protected SceneStateManager manager { get; private set; }
         protected TArg arg { get; private set; }
 
-        Task ISceneState.Load(object arg, ISceneState unloadedSceneState, object result) => Load((TArg)arg, unloadedSceneState, result);
-        public Task Load(TArg arg, ISceneState unloadedSceneState, object result)
+        Task ISceneState.Load(SceneStateManager manager, object arg) => Load(manager, (TArg)arg);
+        public Task Load(SceneStateManager manager, TArg arg)
         {
             phase = SceneStatePhase.Loaded;
             this.arg = arg;
-            return OnLoad(unloadedSceneState, result);
+            this.manager = manager;
+            return OnLoad();
         }
 
         public Task MakeVisible(ISceneState unloadedSceneState, object result)
@@ -89,11 +91,12 @@ namespace APlusOrFail
         {
             await OnUnload();
             arg = default(TArg);
+            manager = null;
             phase = SceneStatePhase.Initialized;
         }
 
 
-        protected virtual Task OnLoad(ISceneState unloadedSceneState, object result) => Task.CompletedTask;
+        protected virtual Task OnLoad() => Task.CompletedTask;
 
         protected virtual Task OnMakeVisible(ISceneState unloadedSceneState, object result) => Task.CompletedTask;
 
@@ -104,5 +107,12 @@ namespace APlusOrFail
         protected virtual Task OnMakeInvisible() => Task.CompletedTask;
 
         protected virtual Task OnUnload() => Task.CompletedTask;
+
+
+        protected void PushSceneState<TA, TR>(ISceneState<TA, TR> sceneState, TA arg) => manager.Push(sceneState, arg);
+
+        protected void ReplaceSceneState<TA, TR>(TResult result, ISceneState<TA, TR> sceneState, TA arg) => manager.Replace(this, result, sceneState, arg);
+
+        protected void PopSceneState(TResult result) => manager.Pop(this, result);
     }
 }

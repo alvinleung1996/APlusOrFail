@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 {
+    using Components;
     using Objects;
 
     public class ObjectCursor : KeyCursor
@@ -60,7 +61,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 
         private ObjectPrefabInfo attachedObject;
         private ICustomizableObject customizableObject;
-        private ObjectGridPlacer objectPlacer;
+        private MapGridPlacer objectPlacer;
 
         private KeyTracker action1Key;
         private KeyTracker action2Key;
@@ -76,8 +77,12 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             base.Start();
 
             attachedObject = Instantiate(objectPrefab);
+
+            IObjectPlayerSource playerSource = attachedObject.GetComponent<IObjectPlayerSource>();
+            if (playerSource != null) playerSource.player = player;
+
             customizableObject = attachedObject.GetComponent<ICustomizableObject>();
-            objectPlacer = attachedObject.GetComponent<ObjectGridPlacer>();
+            objectPlacer = attachedObject.GetComponent<MapGridPlacer>();
             objectPlacer.registerInGrid = false;
 
             action1Key = new KeyTracker(player, Player.Action.Action1);
@@ -112,7 +117,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             }
             else if (action2Key.uped)
             {
-                objectPlacer.rotation = (ObjectGridRects.Rotation)(((int)objectPlacer.rotation + 1) % 4);
+                objectPlacer.rotation = (MapGridRectExtensions.Rotation)(((int)objectPlacer.rotation + 1) % 4);
             }
 
             if (!action2Key.pressed)

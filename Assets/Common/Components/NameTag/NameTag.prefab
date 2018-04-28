@@ -21,7 +21,6 @@ GameObject:
   - component: {fileID: 224177223098460822}
   - component: {fileID: 222750571498896324}
   - component: {fileID: 114174391755506028}
-  - component: {fileID: 114999802963200376}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -157,19 +156,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nameText: {fileID: 114174391755506028}
   worldOffset: {x: 0, y: 1}
---- !u!114 &114999802963200376
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1028016748384098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1741964061, guid: f70555f144d8491a825f0804e09c671c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 2
-  m_VerticalFit: 2
 --- !u!222 &222225215227665402
 CanvasRenderer:
   m_ObjectHideFlags: 1

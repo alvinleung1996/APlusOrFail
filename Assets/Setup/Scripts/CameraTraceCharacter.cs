@@ -2,7 +2,7 @@
 
 namespace APlusOrFail
 {
-    using Components.AutoResizeCamera;
+    using Components;
 
     public class CameraTraceCharacter : MonoBehaviour
     {
@@ -12,7 +12,7 @@ namespace APlusOrFail
             AutoResizeCamera autoResizeCamera = Camera.main.GetComponent<AutoResizeCamera>();
             foreach (GameObject gameObject in GameObject.FindGameObjectsWithTag("Character"))
             {
-                autoResizeCamera.AddTracingSprite(gameObject);
+                autoResizeCamera.Trace(gameObject);
             }
         }
     }

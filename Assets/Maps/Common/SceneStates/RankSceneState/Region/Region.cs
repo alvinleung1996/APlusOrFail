@@ -9,30 +9,21 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
     {
         public Text nameText;
         private FractionLayoutElement layoutElement;
-
-        private bool started;
+        
         private IRoundStat roundStat;
 
-        private void Start()
+        private void Awake()
         {
-            started = true;
             layoutElement = GetComponent<FractionLayoutElement>();
             UpdateRegion(roundStat);
-            roundStat = null;
         }
 
         public void UpdateRegion(IRoundStat roundStat)
         {
-            if (started)
-            {
-                gameObject.SetActive(roundStat != null);
-                nameText.text = roundStat?.name ?? "";
-                layoutElement.numeratorWidth = roundStat?.roundScore ?? 0;
-            }
-            else
-            {
-                this.roundStat = roundStat;
-            }
+            this.roundStat = roundStat;
+            gameObject.SetActive(roundStat != null);
+            nameText.text = roundStat?.name ?? "";
+            layoutElement.numeratorWidth = roundStat?.roundScore ?? 0;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine;
 namespace APlusOrFail.Maps
 {
     using Objects;
-    using Components.AutoResizeCamera;
+    using Components;
 
     public class MapStat : IMapStat
     {
@@ -64,14 +65,16 @@ namespace APlusOrFail.Maps
     {
         public IMapStat mapStat { get; }
         IReadOnlyMapStat IReadonlyRoundStat.mapStat => mapStat;
-        public ObjectGridPlacer spawnArea { get; }
 
+        public MapGridPlacer spawnArea { get; }
         public int order { get; }
         public string name { get; }
         public int roundScore { get; }
+        public IRoundScoreSetting scoreSetting { get; }
+        public IRoundRankColorSetting rankColorSetting { get; }
         public IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
         public RoundState state { get; set; } = RoundState.None;
-
+        public bool tooEasyNoPoint { get; set; }
 
         public RoundStat(IMapStat mapStat, int order, IRoundSetting roundSetting)
         {
@@ -79,8 +82,44 @@ namespace APlusOrFail.Maps
             this.order = order;
             name = roundSetting.name;
             roundScore = roundSetting.roundScore;
+            rankColorSetting = new RoundRankColorSetting(roundSetting.rankColorSetting);
+            scoreSetting = new RoundScoreSetting(roundSetting.scoreSetting);
             usableObjects = new ReadOnlyCollection<ObjectPrefabInfo>(roundSetting.usableObjects.ToList());
             spawnArea = roundSetting.spawnArea;
+        }
+    }
+
+    public class RoundScoreSetting : IRoundScoreSetting
+    {
+        private static readonly PlayerScoreChangeReason[] enumValues
+            = ((PlayerScoreChangeReason[])Enum.GetValues(typeof(PlayerScoreChangeReason))).Where(v => v != PlayerScoreChangeReason.No).ToArray();
+
+        private Dictionary<PlayerScoreChangeReason, int> map = new Dictionary<PlayerScoreChangeReason, int>();
+        public int this[PlayerScoreChangeReason reason] => map[reason];
+
+        public RoundScoreSetting(IRoundScoreSetting setting)
+        {
+            foreach (PlayerScoreChangeReason reason in enumValues)
+            {
+                map.Add(reason, setting[reason]);
+            }
+        }
+    }
+
+    public class RoundRankColorSetting : IRoundRankColorSetting
+    {
+        private static readonly PlayerScoreChangeReason[] enumValues
+            = ((PlayerScoreChangeReason[])Enum.GetValues(typeof(PlayerScoreChangeReason))).Where(v => v != PlayerScoreChangeReason.No).ToArray();
+        
+        private Dictionary<PlayerScoreChangeReason, Color> map = new Dictionary<PlayerScoreChangeReason, Color>();
+        public Color this[PlayerScoreChangeReason reason] => map[reason];
+
+        public RoundRankColorSetting(IRoundRankColorSetting setting)
+        {
+            foreach (PlayerScoreChangeReason reason in enumValues)
+            {
+                map.Add(reason, setting[reason]);
+            }
         }
     }
 
@@ -91,6 +130,7 @@ namespace APlusOrFail.Maps
 
         public int order { get; }
         public Player player { get; }
+        public bool wonOverall { get; set; }
 
         public PlayerStat(IMapStat mapStat, int order, Player player)
         {
@@ -130,5 +170,42 @@ namespace APlusOrFail.Maps
             _readonlyHealthChanges = new ReadOnlyCollection<IPlayerHealthChange>(healthChanges);
             _readonlyScoreChanges = new ReadOnlyCollection<IPlayerScoreChange>(scoreChanges);
         }
+    }
+    
+    public class PlayerHealthChange : IPlayerHealthChange
+    {
+        public PlayerHealthChangeReason reason { get; }
+        public int healthDelta { get; }
+        public GameObject cause { get; }
+
+        public PlayerHealthChange(PlayerHealthChangeReason reason, int healthDelta, GameObject cause)
+        {
+            this.healthDelta = healthDelta;
+            this.reason = reason;
+            this.cause = cause;
+        }
+    }
+
+    public class PlayerScoreChange : IPlayerScoreChange
+    {
+        public PlayerScoreChangeReason reason { get; }
+        public int scoreDelta { get; }
+        public Color rankColor { get; }
+        public GameObject cause { get; }
+
+        public PlayerScoreChange(PlayerScoreChangeReason reason, int scoreDelta, Color rankColor, GameObject cause)
+        {
+            this.scoreDelta = scoreDelta;
+            this.reason = reason;
+            this.rankColor = rankColor;
+            this.cause = cause;
+        }
+    }
+
+    
+    public static class MapStatExtensions
+    {
+        public static IPlayerScoreChange CreateScoreChange(this IRoundSetting setting, PlayerScoreChangeReason reason, GameObject cause) =>
+            new PlayerScoreChange(reason, setting.scoreSetting[reason], setting.rankColorSetting[reason], cause);
     }
 }

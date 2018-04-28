@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace APlusOrFail.Objects
+namespace APlusOrFail.Components
 {
     using Maps;
 
     [DisallowMultipleComponent]
     [ExecuteInEditMode]
-    public class ObjectGridPlacer : MonoBehaviour
+    public class MapGridPlacer : MonoBehaviour
     {
         [SerializeField] private Vector2Int _gridPosition;
         public Vector2Int gridPosition { get { return _gridPosition; } set { SetProperty(ref _gridPosition, value); } }
 
-        [SerializeField] private ObjectGridRects.Rotation _rotation;
-        public ObjectGridRects.Rotation rotation { get { return _rotation; } set { SetProperty(ref _rotation, value); } }
+        [SerializeField] private MapGridRectExtensions.Rotation _rotation;
+        public MapGridRectExtensions.Rotation rotation { get { return _rotation; } set { SetProperty(ref _rotation, value); } }
 
         [SerializeField] private bool _registerInGrid;
         public bool registerInGrid { get { return _registerInGrid; } set { SetProperty(ref _registerInGrid, value); } }
@@ -21,7 +21,7 @@ namespace APlusOrFail.Objects
 
         private bool started;
         private bool registeredInGrid;
-        private readonly List<ObjectGridRect> objectGridRects = new List<ObjectGridRect>();
+        private readonly List<MapGridRect> objectGridRects = new List<MapGridRect>();
         private IEnumerable<RectInt> worldGridRects => objectGridRects.GetLocalRects().Rotate(rotation).Move(gridPosition);
         
 

@@ -3,16 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 {
+    using Components;
     using Objects;
     
     public class ObjectSelectionSceneState : SceneStateBehavior<IMapStat, Void>
     {
         private new Camera camera;
-        public RectTransform uiScene;
+        public Canvas backgroundCanvas;
+        public Canvas objectCanvas;
+        public Canvas foregroundCanvas;
         public KeyCursor keyCursorPrefab;
+        public Vector2 gridUnitScale = new Vector2(200, 200);
+        public float radius = 300;
 
         private readonly List<ObjectPrefabInfo> attachedPrefabInfos = new List<ObjectPrefabInfo>();
         private readonly List<KeyCursor> keyCursors = new List<KeyCursor>();
@@ -22,6 +28,13 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
         {
             camera = Camera.main;
             HideUI();
+        }
+
+        protected override Task OnLoad()
+        {
+            backgroundCanvas.worldCamera = objectCanvas.worldCamera = arg.camera.GetComponent<Camera>();
+            backgroundCanvas.sortingLayerID = objectCanvas.sortingLayerID = SortingLayerId.UI;
+            return Task.CompletedTask;
         }
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
@@ -39,10 +52,14 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             return Task.CompletedTask;
         }
 
+        private List<SpriteRenderer> objSpriteRenderers = new List<SpriteRenderer>();
         private void ShowUI()
         {
-            uiScene.gameObject.SetActive(true);
+            backgroundCanvas.gameObject.SetActive(true);
+            objectCanvas.gameObject.SetActive(true);
+            foregroundCanvas.gameObject.SetActive(true);
 
+            RectTransform objectCanvasRectTransform = objectCanvas.GetComponent<RectTransform>();
             IReadOnlyList<ObjectPrefabInfo> usableObjects = arg.roundSettings[arg.currentRound].usableObjects;
 
             float angleInterval = 2 * Mathf.PI / usableObjects.Count;
@@ -50,19 +67,28 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             {
                 // https://answers.unity.com/questions/1007585/reading-and-setting-asn-objects-global-scale-with.html
 
-                ObjectPrefabInfo prefabInfo = Instantiate(usableObjects[i]);
-                prefabInfo.GetComponent<ObjectGridPlacer>().enabled = false;
+                ObjectPrefabInfo prefabInfo = Instantiate(usableObjects[i], objectCanvas.transform);
+                prefabInfo.transform.localScale = Multiply(prefabInfo.transform.localScale, new Vector3(gridUnitScale.x, gridUnitScale.y, 1));
+
+                prefabInfo.GetComponent<MapGridPlacer>().enabled = false;
                 prefabInfo.gameObject.SetLayerRecursively(LayerId.SelectableObjects);
-                attachedPrefabInfos.Add(prefabInfo);
-                // obj.transform.parent = uiScene; // Fix the scale
-                
-                RectInt objLocalGridBound = prefabInfo.GetComponentsInChildren<ObjectGridRect>().GetLocalRects().GetOuterBound();
+
+                prefabInfo.GetComponentsInChildren(objSpriteRenderers);
+                foreach (SpriteRenderer sr in objSpriteRenderers)
+                {
+                    sr.sortingLayerID = SortingLayerId.UI;
+                    sr.sortingOrder = 1;
+                }
+
+                RectInt objLocalGridBound = prefabInfo.GetComponentsInChildren<MapGridRect>().GetLocalRects().GetOuterBound();
                 Vector2 center = ((Vector2)(objLocalGridBound.min + objLocalGridBound.max)) / 2;
 
                 float angle = Mathf.PI / 2 - angleInterval * i;
-                Vector2 position = new Vector2(2 * Mathf.Cos(angle), 2 * Mathf.Sin(angle));
-                position -= center;
-                prefabInfo.transform.position = position;
+                Vector2 position = new Vector2(radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
+                position += objectCanvasRectTransform.rect.center;
+                prefabInfo.transform.localPosition = position;
+
+                attachedPrefabInfos.Add(prefabInfo);
             }
 
             foreach (Player player in (from ps in arg.playerStats select ps.player))
@@ -73,7 +99,9 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 
         private void HideUI()
         {
-            uiScene.gameObject.SetActive(false);
+            backgroundCanvas.gameObject.SetActive(false);
+            objectCanvas.gameObject.SetActive(false);
+            foregroundCanvas.gameObject.SetActive(false);
 
             foreach (ObjectPrefabInfo attachedPrefabInfo in attachedPrefabInfos)
             {
@@ -89,7 +117,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 
         private void AddKeyCursor(Player player)
         {
-            KeyCursor keyCursor = Instantiate(keyCursorPrefab, uiScene);
+            KeyCursor keyCursor = Instantiate(keyCursorPrefab, foregroundCanvas.transform);
             keyCursor.player = player;
             keyCursors.Add(keyCursor);
         }
@@ -136,6 +164,12 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             KeyCode? code = player.GetKeyForAction(action);
             return code != null && Input.GetKeyUp(code.Value);
         }
+
+        private Vector3 Multiply(Vector3 a, Vector3 b) => new Vector3(
+            a.x * b.x,
+            a.y * b.y,
+            a.z * b.z
+        );
 
     }
 }

@@ -11,54 +11,45 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         public Region regionPrefab;
 
         private readonly List<Region> childRegions = new List<Region>();
-
-
-        private bool started;
+        
         private IMapStat mapStat;
 
 
-        private void Start()
+        private void Awake()
         {
-            started = true;
             layoutController = GetComponent<FractionLayoutController>();
             UpdateRegions(mapStat);
-            mapStat = null;
         }
 
         public void UpdateRegions(IMapStat mapStat)
         {
-            if (started)
+            this.mapStat = mapStat;
+
+            int i = 0;
+            if (mapStat != null)
             {
-                int i = 0;
-                if (mapStat != null)
+                foreach (IRoundStat roundStat in mapStat.roundStats)
                 {
-                    foreach (IRoundStat roundStat in mapStat.roundStats)
+                    Region region;
+                    if (i < childRegions.Count)
                     {
-                        Region region;
-                        if (i < childRegions.Count)
-                        {
-                            region = childRegions[i];
-                        }
-                        else
-                        {
-                            region = Instantiate(regionPrefab, transform);
-                            childRegions.Add(region);
-                        }
-
-                        region.UpdateRegion(roundStat);
-
-                        ++i;
+                        region = childRegions[i];
                     }
-                }
-                layoutController.denominatorWidth = mapStat?.GetMapScore() ?? 0;
-                for (int j = i; j < childRegions.Count; ++j)
-                {
-                    childRegions[j].UpdateRegion(null);
+                    else
+                    {
+                        region = Instantiate(regionPrefab, transform);
+                        childRegions.Add(region);
+                    }
+
+                    region.UpdateRegion(roundStat);
+
+                    ++i;
                 }
             }
-            else
+            layoutController.denominatorWidth = mapStat?.GetMapScore() ?? 0;
+            for (int j = i; j < childRegions.Count; ++j)
             {
-                this.mapStat = mapStat;
+                childRegions[j].UpdateRegion(null);
             }
         }
         

@@ -18,6 +18,7 @@ namespace APlusOrFail
 
         public static SceneStateManager instance { get; private set; }
 
+
         public UnityEngine.Object initialSceneState;
 
         private bool asyncUpdating;
@@ -103,7 +104,7 @@ namespace APlusOrFail
                     sceneStateStack.Push(newSceneState);
 
                     await WhenTwo(
-                        newSceneState.Load(pendingArg, null, null),
+                        newSceneState.Load(this, pendingArg),
                         NonNullTask(oldSceneState?.Blur())
                     );
                     await WhenTwo(
@@ -119,7 +120,7 @@ namespace APlusOrFail
                     sceneStateStack.Push(newSceneState);
 
                     await WhenTwo(
-                        newSceneState.Load(pendingArg, null, null),
+                        newSceneState.Load(this, pendingArg),
                         oldSceneState.Blur()
                     );
                     await WhenTwo(

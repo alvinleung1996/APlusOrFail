@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace APlusOrFail.Objects
+namespace APlusOrFail.Components
 {
-    public class ObjectGridRect : MonoBehaviour
+    public class MapGridRect : MonoBehaviour
     {
         [SerializeField] private RectInt _gridLocalRect;
         public RectInt gridLocalRect { get { return _gridLocalRect; } set { SetProperty(ref _gridLocalRect, value); } }
@@ -25,7 +25,7 @@ namespace APlusOrFail.Objects
         {
             if (Application.isPlaying)
             {
-                ObjectGridPlacer placer = GetComponentInParent<ObjectGridPlacer>();
+                MapGridPlacer placer = GetComponentInParent<MapGridPlacer>();
                 placer?.UpdateProperties();
             }
         }

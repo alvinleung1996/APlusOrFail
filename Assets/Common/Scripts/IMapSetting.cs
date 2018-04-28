@@ -5,7 +5,7 @@ using UnityEngine;
 namespace APlusOrFail
 {
     using Objects;
-    using Components.AutoResizeCamera;
+    using Components;
 
     public interface IMapSetting
     {
@@ -19,9 +19,22 @@ namespace APlusOrFail
     {
         string name { get; }
         int roundScore { get; }
+        IRoundScoreSetting scoreSetting { get; }
         IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
-        ObjectGridPlacer spawnArea { get; }
+        MapGridPlacer spawnArea { get; }
+        IRoundRankColorSetting rankColorSetting { get; }
     }
+
+    public interface IRoundScoreSetting
+    {
+       int this[PlayerScoreChangeReason reason] { get; }
+    }
+
+    public interface IRoundRankColorSetting
+    {
+        Color this[PlayerScoreChangeReason reason] { get; }
+    }
+
 
     public static class MapSettingExtensions
     {

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 {
     using Character;
-    using Objects;
+    using Components;
     using Components.NameTag;
 
     public class RoundSceneState : SceneStateBehavior<IMapStat, Void>
@@ -26,8 +26,8 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
             {
                 canvasRectTransform.gameObject.SetActive(true);
 
-                ObjectGridPlacer spawnArea = arg.roundSettings[arg.currentRound].spawnArea;
-                RectInt bound = spawnArea.GetComponentsInChildren<ObjectGridRect>()
+                MapGridPlacer spawnArea = arg.roundSettings[arg.currentRound].spawnArea;
+                RectInt bound = spawnArea.GetComponentsInChildren<MapGridRect>()
                     .GetLocalRects()
                     .Rotate(spawnArea.rotation)
                     .Move(spawnArea.gridPosition)
@@ -68,7 +68,7 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     nameTag.charPlayer = charPlayer;
 
 
-                    arg.camera.AddTracingSprite(charControl.gameObject);
+                    arg.camera.Trace(charControl.gameObject);
 
 
                     ++i;
@@ -90,19 +90,10 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
         {
             canvasRectTransform.gameObject.SetActive(false);
 
-            foreach (CharacterControl charControl in notEndedCharControls.Concat(endedCharControls))
+            IEnumerable<CharacterControl> charControls = notEndedCharControls.Concat(endedCharControls);
+            CalculateScore(charControls);
+            foreach (CharacterControl charControl in charControls)
             {
-                Player player = charControl.GetComponent<CharacterPlayer>().player;
-                IRoundPlayerStat roundPlayerStat = arg.GetRoundPlayerStat(arg.currentRound, arg.playerStats.FindIndex(ps => ps.player == player));
-
-                if (charControl.won)
-                {
-                    charControl.ChangeScore(new CharacterControl.ScoreChange(30));
-                }
-
-                roundPlayerStat.healthChanges.AddRange(charControl.healthChanges);
-                roundPlayerStat.scoreChanges.AddRange(charControl.scoreChanges);
-
                 charControl.onEndedChanged -= OnCharEnded;
                 Destroy(charControl.gameObject);
             }
@@ -125,13 +116,13 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
             {
                 endedCharControls.Add(charControl);
                 notEndedCharControls.Remove(charControl);
-                arg.camera.RemoveTracingSprite(charControl.gameObject);
+                arg.camera.Untrace(charControl.gameObject);
             }
             else
             {
                 endedCharControls.Remove(charControl);
                 notEndedCharControls.Add(charControl);
-                arg.camera.AddTracingSprite(charControl.gameObject);
+                arg.camera.Trace(charControl.gameObject);
             }
 
             if (notEndedCharControls.Count == 0)
@@ -143,6 +134,28 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
         private void OnAllCharacterEnded()
         {
             SceneStateManager.instance.Pop(this, null);
+        }
+
+        private void CalculateScore(IEnumerable<CharacterControl> charControls)
+        {
+            IRoundStat roundStat = arg.roundStats[arg.currentRound];
+
+            roundStat.tooEasyNoPoint = charControls.All(cc => cc.won);
+
+            foreach (CharacterControl charControl in charControls)
+            {
+                Player player = charControl.GetComponent<CharacterPlayer>().player;
+                IRoundPlayerStat roundPlayerStat = arg.GetRoundPlayerStat(arg.currentRound, arg.playerStats.FindIndex(ps => ps.player == player));
+
+                if (!roundStat.tooEasyNoPoint && charControl.won)
+                {
+                    charControl.ChangeScore(roundStat.CreateScoreChange(PlayerScoreChangeReason.Won, charControl.wonCause));
+                }
+
+                roundPlayerStat.healthChanges.AddRange(charControl.healthChanges);
+                roundPlayerStat.scoreChanges.AddRange(charControl.scoreChanges);
+            }
+
         }
     }
 }

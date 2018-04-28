@@ -32,7 +32,7 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
             HideUI();
         }
 
-        protected override Task OnLoad(ISceneState unloadedSceneState, object result)
+        protected override Task OnLoad()
         {
             cancelled = false;
             player = character.GetComponent<CharacterPlayer>().player;

@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace APlusOrFail.Maps.Map0
+namespace APlusOrFail.Maps
 {
+    using Components;
     using Objects;
 
     public class Map0ManagerBehavior : MapManagerBehavior
     {
         public List<ObjectPrefabInfo> usableObjects;
-        public ObjectGridPlacer spawnArea;
+        public MapGridPlacer spawnArea;
         public GameObject test_characterSprite;
 
         protected override void Awake()
@@ -49,8 +50,11 @@ namespace APlusOrFail.Maps.Map0
         {
             return new IRoundSetting[]
             {
-                new RoundSetting("Ask the professor", 50, usableObjects, spawnArea),
-                new RoundSetting("Capture the professor", 50, usableObjects, spawnArea)
+                new RoundSetting("Ask the professor", 50, usableObjects, spawnArea, defaultRoundScoreSetting, defaultRoundRankColorSetting),
+                new RoundSetting("Capture the professor", 50, usableObjects, spawnArea, defaultRoundScoreSetting, defaultRoundRankColorSetting),
+                new RoundSetting("Ask the professor", 50, usableObjects, spawnArea, defaultRoundScoreSetting, defaultRoundRankColorSetting),
+                new RoundSetting("Capture the professor", 50, usableObjects, spawnArea, defaultRoundScoreSetting, defaultRoundRankColorSetting),
+                new RoundSetting("Ask the professor", 50, usableObjects, spawnArea, defaultRoundScoreSetting, defaultRoundRankColorSetting)
             };
         }
     }

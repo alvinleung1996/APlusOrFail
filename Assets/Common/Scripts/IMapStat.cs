@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace APlusOrFail
 {
@@ -45,12 +46,14 @@ namespace APlusOrFail
 
         int order { get; }
         RoundState state { get; }
+        bool tooEasyNoPoint { get; }
     }
 
     public interface IRoundStat : IReadonlyRoundStat
     {
         new IMapStat mapStat { get; }
         new RoundState state { get; set; }
+        new bool tooEasyNoPoint { get; set; }
     }
 
 
@@ -60,11 +63,14 @@ namespace APlusOrFail
 
         int order { get; }
         Player player { get; }
+        bool wonOverall { get; }
     }
 
     public interface IPlayerStat : IReadOnlyPlayerStat
     {
         new IMapStat mapStat { get; }
+
+        new bool wonOverall { get; set; }
     }
 
 
@@ -95,12 +101,31 @@ namespace APlusOrFail
 
     public interface IPlayerHealthChange
     {
+        PlayerHealthChangeReason reason { get; }
         int healthDelta { get; }
+        GameObject cause { get; }
     }
 
     public interface IPlayerScoreChange
     {
+        PlayerScoreChangeReason reason { get; }
         int scoreDelta { get; }
+        Color rankColor { get; }
+        GameObject cause { get; }
+    }
+
+    public enum PlayerHealthChangeReason
+    {
+        No,
+        ByTrap,
+        ExitArea
+    }
+
+    public enum PlayerScoreChangeReason
+    {
+        No,
+        Won,
+        KillOtherByTrap
     }
 
 
@@ -115,5 +140,8 @@ namespace APlusOrFail
         {
             return Enumerable.Range(0, mapStat.roundCount).Select(i => mapStat.GetRoundPlayerStat(i, playerOrder));
         }
+
+        public static IRoundPlayerStat GetRoundPlayerStat(this IMapStat mapStat, int roundOrder, Player player) =>
+            mapStat.GetRoundPlayerStat(roundOrder, mapStat.playerStats.FindIndex(ps => ps.player == player));
     }
 }

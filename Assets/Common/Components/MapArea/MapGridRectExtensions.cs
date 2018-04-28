@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace APlusOrFail.Objects
+namespace APlusOrFail.Components
 {
-    public static class ObjectGridRects
+    public static class MapGridRectExtensions
     {
         public enum Rotation : byte
         {
@@ -16,7 +16,7 @@ namespace APlusOrFail.Objects
         }
 
 
-        public static IEnumerable<RectInt> GetLocalRects(this IEnumerable<ObjectGridRect> gridRects) => from gr in gridRects select gr.gridLocalRect;
+        public static IEnumerable<RectInt> GetLocalRects(this IEnumerable<MapGridRect> gridRects) => from gr in gridRects select gr.gridLocalRect;
 
 
         public static IEnumerable<RectInt> Rotate(this IEnumerable<RectInt> rects, Rotation rotation) => from r in rects select Rotate(r, rotation);

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
 {
@@ -16,6 +17,7 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
         public PlaceObjectSceneState placeObjectUIScene;
         public RoundSceneState roundUIScene;
         public RankSceneState rankSceneState;
+        public ResultSceneState resultSceneState;
         
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
@@ -40,6 +42,10 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
             else if (unloadedType == typeof(RankSceneState))
             {
                 OnRankFinished();
+            }
+            else if (unloadedType == typeof(ResultSceneState))
+            {
+                OnResultFinished();
             }
             return Task.CompletedTask;
         }
@@ -67,6 +73,7 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
             SceneStateManager.instance.Push(rankSceneState, arg);
         }
 
+        private List<int> maxScores = new List<int>();
         private void OnRankFinished()
         {
             if (arg.currentRound >= 0 && arg.currentRound < arg.roundCount) arg.roundStats[arg.currentRound].state = RoundState.None;
@@ -79,7 +86,27 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
             else
             {
                 print("Round Finished!");
+
+                maxScores.Clear();
+                maxScores.AddRange(arg.playerStats.Select(ps => arg
+                    .GetRoundPlayerStatOfPlayer(ps.order)
+                    .SelectMany(rps => rps.scoreChanges)
+                    .Sum(sc => sc.scoreDelta)));
+
+                int maxScore = maxScores.Max();
+
+                foreach (PlayerStat ps in arg.playerStats.Where((ps, i) => maxScores[i] == maxScore))
+                {
+                    ps.wonOverall = true;
+                }
+
+                PushSceneState(resultSceneState, arg);
             }
+        }
+
+        private void OnResultFinished()
+        {
+            SceneManager.LoadSceneAsync(SceneBuildIndex.setup);
         }
     }
 }

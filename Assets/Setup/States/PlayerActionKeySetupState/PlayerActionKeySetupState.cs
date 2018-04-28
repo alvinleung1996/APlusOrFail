@@ -52,7 +52,7 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
             HideUI();
         }
 
-        protected override Task OnLoad(ISceneState unloadedSceneState, object result)
+        protected override Task OnLoad()
         {
             charPlayer = character.GetComponent<CharacterPlayer>();
             actionKeyMap = new Dictionary<Player.Action, KeyCode>();
