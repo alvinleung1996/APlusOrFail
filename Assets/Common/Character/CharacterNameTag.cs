@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace APlusOrFail.Character
 {
     using NameTagCanvas;
 
     [RequireComponent(typeof(CharacterPlayer))]
+    [Obsolete]
     public class CharacterNameTag : MonoBehaviour
     {
         
@@ -16,8 +18,8 @@ namespace APlusOrFail.Character
             nameTagInfo.worldOffset = new Vector2(0, 1);
 
             CharacterPlayer charPlayer = GetComponentInParent<CharacterPlayer>();
-            SetPlayer(charPlayer.player);
-            charPlayer.onPlayerChanged += OnPlayerChanged;
+            //SetPlayer(charPlayer.player);
+            //charPlayer.onPlayerChanged += OnPlayerChanged;
         }
 
         private void OnDestroy()
@@ -25,31 +27,31 @@ namespace APlusOrFail.Character
             NameTagCanvas0.instance?.RemoveNameTag(transform);
         }
 
-        private void OnPlayerChanged(CharacterPlayer charPlayer, Player newPlayer)
+        private void OnPlayerChanged(CharacterPlayer charPlayer, PlayerSetting newPlayer)
         {
             SetPlayer(newPlayer);
         }
 
-        private Player player;
-        private void SetPlayer(Player player)
+        private PlayerSetting player;
+        private void SetPlayer(PlayerSetting player)
         {
-            if (this.player != null)
-            {
-                this.player.onNameChanged -= OnPlayerNameChanged;
-                this.player.onColorChanged -= OnPlayerColorChanged;
-            }
-            this.player = player;
+            //if (this.player != null)
+            //{
+            //    this.player.onNameChanged -= OnPlayerNameChanged;
+            //    this.player.onColorChanged -= OnPlayerColorChanged;
+            //}
+            //this.player = player;
 
-            SetName(player?.name);
-            SetColor(player?.color);
-            if (player != null)
-            {
-                player.onNameChanged += OnPlayerNameChanged;
-                player.onColorChanged += OnPlayerColorChanged;
-            }
+            //SetName(player?.name);
+            //SetColor(player?.color);
+            //if (player != null)
+            //{
+            //    player.onNameChanged += OnPlayerNameChanged;
+            //    player.onColorChanged += OnPlayerColorChanged;
+            //}
         }
 
-        private void OnPlayerNameChanged(Player player, string name)
+        private void OnPlayerNameChanged(PlayerSetting player, string name)
         {
             SetName(name);
         }
@@ -59,7 +61,7 @@ namespace APlusOrFail.Character
             nameTagInfo.name = name;
         }
 
-        private void OnPlayerColorChanged(Player player, Color color)
+        private void OnPlayerColorChanged(PlayerSetting player, Color color)
         {
             SetColor(color);
         }

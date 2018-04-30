@@ -91,7 +91,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
                 attachedPrefabInfos.Add(prefabInfo);
             }
 
-            foreach (Player player in (from ps in arg.playerStats select ps.player))
+            foreach (IReadOnlyPlayerSetting player in arg.playerStats)
             {
                 AddKeyCursor(player);
             }
@@ -115,7 +115,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             }
         }
 
-        private void AddKeyCursor(Player player)
+        private void AddKeyCursor(IReadOnlyPlayerSetting player)
         {
             KeyCursor keyCursor = Instantiate(keyCursorPrefab, foregroundCanvas.transform);
             keyCursor.player = player;
@@ -135,12 +135,12 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
                 for (int i = keyCursors.Count - 1; i >= 0; --i)
                 {
                     KeyCursor keyCursor = keyCursors[i];
-                    if (HasKeyUp(keyCursor.player, Player.Action.Action1))
+                    if (HasKeyUp(keyCursor.player, PlayerAction.Action1))
                     {
                         ObjectPrefabInfo prefabInfo = Physics2D.OverlapPoint(camera.ViewportToWorldPoint(keyCursor.viewportLocation), 1 << LayerId.SelectableObjects)?.gameObject.GetComponentInParent<ObjectPrefabInfo>();
                         if (prefabInfo != null)
                         {
-                            arg.GetRoundPlayerStat(arg.currentRound, arg.playerStats.FindIndex(ps => ps.player ==  keyCursor.player))
+                            arg.roundPlayerStats[arg.currentRound, arg.playerStats.FindIndex(ps => ps ==  keyCursor.player)]
                                 .selectedObjectPrefab = prefabInfo.prefab;
 
                             RemoveKeyCursor(keyCursor);
@@ -159,10 +159,10 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             }
         }
 
-        private bool HasKeyUp(Player player, Player.Action action)
+        private bool HasKeyUp(IReadOnlyPlayerSetting player, PlayerAction action)
         {
-            KeyCode? code = player.GetKeyForAction(action);
-            return code != null && Input.GetKeyUp(code.Value);
+            KeyCode code = player.GetKeyForAction(action);
+            return code != KeyCode.None && Input.GetKeyUp(code);
         }
 
         private Vector3 Multiply(Vector3 a, Vector3 b) => new Vector3(

@@ -38,12 +38,13 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
         {
             uiScene.gameObject.SetActive(true);
 
-            foreach (IRoundPlayerStat roundPlayerStat in arg.GetRoundPlayerStatOfRound(arg.currentRound))
+            for (int i = 0; i < arg.playerStats.Count; ++i)
             {
+                IReadOnlyRoundPlayerStat roundPlayerStat = arg.roundPlayerStats[arg.currentRound, i];
                 if (roundPlayerStat.selectedObjectPrefab != null)
                 {
                     ObjectCursor cursor = Instantiate(cursorPrefab, uiScene);
-                    cursor.player = roundPlayerStat.playerStat.player;
+                    cursor.player = arg.playerStats[i];
                     cursor.objectPrefab = roundPlayerStat.selectedObjectPrefab;
                     cursor.camera = camera;
                     cursor.onCursorDestroyed += OnObjectCursorDestroyed;

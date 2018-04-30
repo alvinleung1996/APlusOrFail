@@ -6,28 +6,28 @@ namespace APlusOrFail
 {
     public static class PlayerInputRegistry
     {
-        private static readonly Dictionary<KeyCode, Player> registry = new Dictionary<KeyCode, Player>();
+        private static readonly Dictionary<KeyCode, IReadOnlyPlayerSetting> registry = new Dictionary<KeyCode, IReadOnlyPlayerSetting>();
 
         public static bool HasRegistered(KeyCode key)
         {
             return registry.ContainsKey(key);
         }
 
-        public static bool HasRegisteredByOther(KeyCode key, Player exceptPlayer)
+        public static bool HasRegisteredByOther(KeyCode key, IReadOnlyPlayerSetting exceptPlayer)
         {
-            Player associatedPlayer = GetAssociatedPlayer(key);
+            IReadOnlyPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
             return associatedPlayer != null && associatedPlayer != exceptPlayer;
         }
 
-        public static Player GetAssociatedPlayer(KeyCode key)
+        public static IReadOnlyPlayerSetting GetAssociatedPlayer(KeyCode key)
         {
-            Player player;
+            IReadOnlyPlayerSetting player;
             return registry.TryGetValue(key, out player) ? player : null;
         }
 
-        public static void RegisterKey(KeyCode key, Player player)
+        public static void RegisterKey(KeyCode key, IReadOnlyPlayerSetting player)
         {
-            Player associatedPlayer = GetAssociatedPlayer(key);
+            IReadOnlyPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
             if (associatedPlayer == null)
             {
                 registry[key] = player;
@@ -38,7 +38,7 @@ namespace APlusOrFail
             }
         }
 
-        public static void UnregisterKey(KeyCode key, Player player)
+        public static void UnregisterKey(KeyCode key, IReadOnlyPlayerSetting player)
         {
             if (GetAssociatedPlayer(key) == player)
             {

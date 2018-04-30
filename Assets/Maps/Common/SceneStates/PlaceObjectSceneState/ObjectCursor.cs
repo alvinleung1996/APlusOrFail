@@ -10,7 +10,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
     {
         private class KeyTracker
         {
-            public readonly Player.Action action;
+            public readonly PlayerAction action;
             private readonly KeyCode code;
             public bool downed { get; private set; }
             public bool pressed { get; private set; }
@@ -18,10 +18,10 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 
             private bool cancelUp;
 
-            public KeyTracker(Player player, Player.Action action)
+            public KeyTracker(IReadOnlyPlayerSetting player, PlayerAction action)
             {
                 this.action = action;
-                code = player.GetKeyForAction(action) ?? KeyCode.None;
+                code = player.GetKeyForAction(action);
             }
 
             public void Update()
@@ -76,7 +76,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
         {
             base.Start();
 
-            attachedObject = Instantiate(objectPrefab);
+            attachedObject = Instantiate(objectPrefab, MapManager.mapStat.mapArea.transform);
 
             IObjectPlayerSource playerSource = attachedObject.GetComponent<IObjectPlayerSource>();
             if (playerSource != null) playerSource.player = player;
@@ -85,12 +85,12 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             objectPlacer = attachedObject.GetComponent<MapGridPlacer>();
             objectPlacer.registerInGrid = false;
 
-            action1Key = new KeyTracker(player, Player.Action.Action1);
-            action2Key = new KeyTracker(player, Player.Action.Action2);
-            upKey = new KeyTracker(player, Player.Action.Up);
-            leftKey = new KeyTracker(player, Player.Action.Left);
-            rightKey = new KeyTracker(player, Player.Action.Right);
-            downKey = new KeyTracker(player, Player.Action.Down);
+            action1Key = new KeyTracker(player, PlayerAction.Action1);
+            action2Key = new KeyTracker(player, PlayerAction.Action2);
+            upKey = new KeyTracker(player, PlayerAction.Up);
+            leftKey = new KeyTracker(player, PlayerAction.Left);
+            rightKey = new KeyTracker(player, PlayerAction.Right);
+            downKey = new KeyTracker(player, PlayerAction.Down);
         }
 
         protected override void Update()

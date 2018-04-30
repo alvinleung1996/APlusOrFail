@@ -73,29 +73,33 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
             SceneStateManager.instance.Push(rankSceneState, arg);
         }
 
-        private List<int> maxScores = new List<int>();
+        private readonly List<int> playerPoints = new List<int>();
         private void OnRankFinished()
         {
-            if (arg.currentRound >= 0 && arg.currentRound < arg.roundCount) arg.roundStats[arg.currentRound].state = RoundState.None;
+            if (arg.currentRound >= 0 && arg.currentRound < arg.roundSettings.Count)
+                arg.roundStats[arg.currentRound].state = RoundState.None;
+
             ++arg.currentRound;
-            if (arg.currentRound < arg.roundCount)
+
+            playerPoints.Clear();
+            playerPoints.AddRange(arg.playerStats.Select((ps, i) => arg
+                    .GetRoundPlayerStatOfPlayer(i)
+                    .SelectMany(rps => rps.scoreChanges)
+                    .Sum(sc => sc.delta)));
+            bool someonePassed = playerPoints.Any(p => p >= arg.passPoints);
+
+            if (arg.currentRound < arg.roundSettings.Count && !someonePassed)
             {
-                SceneStateManager.instance.Push(objectSelectionUIScene, arg);
+                PushSceneState(objectSelectionUIScene, arg);
                 arg.roundStats[arg.currentRound].state = RoundState.SelectingObjects;
             }
             else
             {
                 print("Round Finished!");
 
-                maxScores.Clear();
-                maxScores.AddRange(arg.playerStats.Select(ps => arg
-                    .GetRoundPlayerStatOfPlayer(ps.order)
-                    .SelectMany(rps => rps.scoreChanges)
-                    .Sum(sc => sc.scoreDelta)));
+                int maxPoints = playerPoints.Max();
 
-                int maxScore = maxScores.Max();
-
-                foreach (PlayerStat ps in arg.playerStats.Where((ps, i) => maxScores[i] == maxScore))
+                foreach (PlayerStat ps in arg.playerStats.Where((ps, i) => playerPoints[i] == maxPoints))
                 {
                     ps.wonOverall = true;
                 }

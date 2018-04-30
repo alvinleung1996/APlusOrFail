@@ -31,7 +31,7 @@ namespace APlusOrFail.Setup.States.DefaultSceneState
                 CharacterPlayer charPlayer = selectedChar.GetComponent<CharacterPlayer>();
                 if (charPlayer.player == null)
                 {
-                    charPlayer.player = new Player()
+                    charPlayer.player = new PlayerSetting()
                     {
                         characterSprite = selectedChar.GetComponent<CharacterSprite>().overrideCharacterSprite
                     };
@@ -54,7 +54,7 @@ namespace APlusOrFail.Setup.States.DefaultSceneState
                 if (activeNameColorSetupScene.cancelled)
                 {
                     CharacterPlayer charPlayer = activeNameColorSetupScene.character.GetComponent<CharacterPlayer>();
-                    charPlayer.player.Delete();
+                    //TODO: delete player;
                     charPlayer.player = null;
                 }
                 else
@@ -70,7 +70,7 @@ namespace APlusOrFail.Setup.States.DefaultSceneState
                 if (activeKeySetupScene.cancelled)
                 {
                     CharacterPlayer charPlayer = activeKeySetupScene.character.GetComponent<CharacterPlayer>();
-                    charPlayer.player.Delete();
+                    // TODO: delete player
                     charPlayer.player = null;
                 }
                 activeKeySetupScene = null;

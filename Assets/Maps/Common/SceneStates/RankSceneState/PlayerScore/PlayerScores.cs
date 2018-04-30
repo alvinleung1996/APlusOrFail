@@ -24,7 +24,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             int i = 0;
             if (mapStat != null)
             {
-                for (; i < mapStat.playerCount; ++i)
+                for (; i < mapStat.playerSettings.Count; ++i)
                 {
                     PlayerScore playerScore;
                     if (i < playerScoreChildren.Count)

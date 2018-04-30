@@ -25,13 +25,17 @@ namespace APlusOrFail.Maps.SceneStates
             if (unloadedSceneState == null)
             {
                 canvas.gameObject.SetActive(true);
-
-                foreach (PlayerStat ps in arg.playerStats.Where(ps => ps.wonOverall))
+                
+                foreach (IPlayerStat ps in arg.playerStats.Where(ps => ps.wonOverall))
                 {
-                    CharacterControl charControl = Instantiate(characterPrefab, arg.roundSettings[arg.roundCount - 1].spawnArea.transform.position, characterPrefab.transform.rotation);
+                    CharacterControl charControl = Instantiate(
+                        characterPrefab,
+                        arg.roundSettings[arg.currentRound - 1].spawnArea.transform.position,
+                        characterPrefab.transform.rotation
+                    );
                     CharacterPlayer charPlayer = charControl.GetComponent<CharacterPlayer>();
 
-                    charPlayer.player = ps.player;
+                    charPlayer.player = ps;
 
                     attacedCharacters.Add(charControl);
                     arg.camera.Trace(charControl.gameObject);

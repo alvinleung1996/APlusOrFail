@@ -35,7 +35,7 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                 Vector2 spawnPoint = MapManager.mapStat.mapArea.LocalToWorldPosition(bound.center);
 
                 int i = 0;
-                foreach (Player player in (from ps in arg.playerStats select ps.player))
+                foreach (IReadOnlyPlayerSetting player in arg.playerStats)
                 {
                     CharacterControl charControl = Instantiate(characterPrefab, spawnPoint, characterPrefab.transform.rotation);
                     CharacterPlayer charPlayer = charControl.GetComponent<CharacterPlayer>();
@@ -144,12 +144,12 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 
             foreach (CharacterControl charControl in charControls)
             {
-                Player player = charControl.GetComponent<CharacterPlayer>().player;
-                IRoundPlayerStat roundPlayerStat = arg.GetRoundPlayerStat(arg.currentRound, arg.playerStats.FindIndex(ps => ps.player == player));
+                IReadOnlyPlayerSetting player = charControl.GetComponent<CharacterPlayer>().player;
+                IRoundPlayerStat roundPlayerStat = arg.roundPlayerStats[arg.currentRound, arg.playerStats.FindIndex(ps => ps == player)];
 
                 if (!roundStat.tooEasyNoPoint && charControl.won)
                 {
-                    charControl.ChangeScore(roundStat.CreateScoreChange(PlayerScoreChangeReason.Won, charControl.wonCause));
+                    charControl.ChangeScore(roundStat.CreatePointsChange(PlayerPointsChangeReason.Won, charControl.wonCause));
                 }
 
                 roundPlayerStat.healthChanges.AddRange(charControl.healthChanges);

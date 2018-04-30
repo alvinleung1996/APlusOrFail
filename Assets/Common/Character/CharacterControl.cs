@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
@@ -48,11 +49,11 @@ namespace APlusOrFail.Character
         }
         public event EventHandler<CharacterControl, bool> onEndedChanged;
 
-        public readonly ReadOnlyCollection<IPlayerHealthChange> healthChanges;
-        private readonly List<IPlayerHealthChange> _healthChanges = new List<IPlayerHealthChange>();
+        public readonly ReadOnlyCollection<IReadOnlyPlayerHealthChange> healthChanges;
+        private readonly List<IReadOnlyPlayerHealthChange> _healthChanges = new List<IReadOnlyPlayerHealthChange>();
 
-        public readonly ReadOnlyCollection<IPlayerScoreChange> scoreChanges;
-        private readonly List<IPlayerScoreChange> _scoreChanges = new List<IPlayerScoreChange>();
+        public readonly ReadOnlyCollection<IReadOnlyPlayerScoreChange> scoreChanges;
+        private readonly List<IReadOnlyPlayerScoreChange> _scoreChanges = new List<IReadOnlyPlayerScoreChange>();
         
 
         private new Rigidbody2D rigidbody2D;
@@ -91,34 +92,29 @@ namespace APlusOrFail.Character
 
         public CharacterControl()
         {
-            healthChanges = new ReadOnlyCollection<IPlayerHealthChange>(_healthChanges);
-            scoreChanges = new ReadOnlyCollection<IPlayerScoreChange>(_scoreChanges);
+            healthChanges = new ReadOnlyCollection<IReadOnlyPlayerHealthChange>(_healthChanges);
+            scoreChanges = new ReadOnlyCollection<IReadOnlyPlayerScoreChange>(_scoreChanges);
         }
 
-
-        private void Start()
+        private void Awake()
         {
-            health = initialHealth;
-
             rigidbody2D = GetComponent<Rigidbody2D>();
             charPlayer = GetComponent<CharacterPlayer>();
             charSprite = GetComponent<CharacterSprite>();
             charAnimator = GetComponent<Animator>();
-
-            spriteAnimator = charSprite.attachedSprite?.GetComponent<Animator>();
-            charSprite.onAttachedSpriteChanged += OnAttachedSpriteChanged;
-
+            health = initialHealth;
             UpdateEnded();
         }
 
-        private void OnDestroy()
+        private void Start()
         {
-            charSprite.onAttachedSpriteChanged -= OnAttachedSpriteChanged;
+            StartCoroutine(LateStart());
         }
 
-        private void OnAttachedSpriteChanged(CharacterSprite charSprite, GameObject attachedSprite)
+        IEnumerator LateStart()
         {
-            spriteAnimator = attachedSprite?.GetComponent<Animator>();
+            yield return new WaitForFixedUpdate();
+            spriteAnimator = charSprite.attachedSprite?.GetComponent<Animator>();
         }
 
 
@@ -131,10 +127,10 @@ namespace APlusOrFail.Character
             bool faceRight = this.faceRight;
             float targetWheelVelocity = 0;
 
-            bool leftInput = HasKeyPressed(Player.Action.Left);
-            bool rightInput = HasKeyPressed(Player.Action.Right);
-            bool jumpInput = HasKeyPressed(Player.Action.Up);
-            bool squatInput = HasKeyPressed(Player.Action.Down);
+            bool leftInput = HasKeyPressed(PlayerAction.Left);
+            bool rightInput = HasKeyPressed(PlayerAction.Right);
+            bool jumpInput = HasKeyPressed(PlayerAction.Up);
+            bool squatInput = HasKeyPressed(PlayerAction.Down);
 
             bool leftAction = leftInput && !rightInput;
             bool rightAction = !leftInput && rightInput;
@@ -281,22 +277,22 @@ namespace APlusOrFail.Character
             gravitionalVelocity = Vector2.Dot(rigidbody2D.velocity, -Physics2D.gravity.normalized);
         }
 
-        private bool HasKeyPressed(Player.Action action)
+        private bool HasKeyPressed(PlayerAction action)
         {
-            KeyCode? code = charPlayer.player?.GetKeyForAction(action);
-            return code != null && Input.GetKey(code.Value);
+            KeyCode code = charPlayer.player?.GetKeyForAction(action) ?? KeyCode.None;
+            return code != KeyCode.None && Input.GetKey(code);
         }
 
 
-        public int ChangeHealth(IPlayerHealthChange healthChange)
+        public int ChangeHealth(IReadOnlyPlayerHealthChange healthChange)
         {
             if (!won)
             {
-                int newHealth = Mathf.Max(health + healthChange.healthDelta, 0);
+                int newHealth = Mathf.Max(health + healthChange.delta, 0);
                 if (newHealth != health)
                 {
                     int delta = newHealth - health;
-                    _healthChanges.Add(new PlayerHealthChange(healthChange.reason, delta, healthChange.cause));
+                    _healthChanges.Add(new ReadOnlyPlayerHealthChange(healthChange.reason, delta, healthChange.cause));
                     health = newHealth;
                     UpdateEnded();
                     return delta;
@@ -305,7 +301,7 @@ namespace APlusOrFail.Character
             return 0;
         }
 
-        public void ChangeScore(IPlayerScoreChange scoreChange)
+        public void ChangeScore(IReadOnlyPlayerScoreChange scoreChange)
         {
             _scoreChanges.Add(scoreChange);
         }

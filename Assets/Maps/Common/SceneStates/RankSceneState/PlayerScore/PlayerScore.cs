@@ -34,11 +34,13 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             gameObject.SetActive(mapStat != null);
             if (mapStat != null)
             {
-                nameText.text = mapStat.playerStats[playerOrder].player.name;
-                layoutController.denominatorWidth = mapStat.GetMapScore();
+                nameText.text = mapStat.playerStats[playerOrder].name;
+                layoutController.denominatorWidth = mapStat.roundSettings
+                    .Take(Mathf.Max(mapStat.currentRound + 1, mapStat.minRoundCount))
+                    .Sum(rs => rs.points);
 
                 int i = 0;
-                foreach (IPlayerScoreChange playerScoreChange in mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges))
+                foreach (IReadOnlyPlayerScoreChange playerScoreChange in mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges))
                 {
                     SubScore subScore;
                     if (i < subScores.Count)

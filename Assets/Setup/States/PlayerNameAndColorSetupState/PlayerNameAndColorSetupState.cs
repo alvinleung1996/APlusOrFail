@@ -18,7 +18,7 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
         public GameObject character { get; set; }
         public bool cancelled { get; private set; }
 
-        private Player player;
+        private IPlayerSetting player;
         private Color color;
         
         private void Start()
@@ -35,7 +35,7 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
         protected override Task OnLoad()
         {
             cancelled = false;
-            player = character.GetComponent<CharacterPlayer>().player;
+            player = (IPlayerSetting)character.GetComponent<CharacterPlayer>().player;
             color = player.color;
             nameInputField.text = player.name;
             return Task.CompletedTask;

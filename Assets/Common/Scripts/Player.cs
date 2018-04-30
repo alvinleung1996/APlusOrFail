@@ -4,22 +4,79 @@ using UnityEngine;
 
 namespace APlusOrFail
 {
-    public class Player
+    public enum PlayerAction
     {
-        public enum Action
+        Left,
+        Right,
+        Up,
+        Down,
+        Action1,
+        Action2
+    }
+
+    public interface IReadOnlyPlayerSetting
+    {
+        int id { get; }
+        string name { get; }
+        Color color { get; }
+        GameObject characterSprite { get; }
+        IReadOnlyDictionary<PlayerAction, KeyCode> actionMap { get; }
+    }
+
+    public interface IPlayerSetting : IReadOnlyPlayerSetting
+    {
+        new string name { get; set; }
+        new Color color { get; set; }
+        new GameObject characterSprite { get; set; }
+        new IDictionary<PlayerAction, KeyCode> actionMap { get; }
+    }
+
+    public static class PlayerSettingExtensions
+    {
+        public static bool HasKeyForAction(this IReadOnlyPlayerSetting playerSetting, PlayerAction action)
         {
-            Left,
-            Right,
-            Up,
-            Down,
-            Action1,
-            Action2
+            return playerSetting.actionMap.ContainsKey(action);
         }
 
+        public static KeyCode GetKeyForAction(this IReadOnlyPlayerSetting playerSetting, PlayerAction action)
+        {
+            KeyCode key;
+            return playerSetting.actionMap.TryGetValue(action, out key) ? key : KeyCode.None;
+        }
 
+        public static void MapActionToKey(this IPlayerSetting playerSetting, PlayerAction action, KeyCode key)
+        {
+            PlayerInputRegistry.RegisterKey(key, playerSetting);
+            playerSetting.actionMap[action] = key;
+        }
+
+        public static void UnmapActionFromKey(this IPlayerSetting playerSetting, PlayerAction action)
+        {
+            KeyCode key;
+            if (playerSetting.actionMap.TryGetValue(action, out key))
+            {
+                PlayerInputRegistry.UnregisterKey(key, playerSetting);
+                playerSetting.actionMap.Remove(action);
+            }
+
+        }
+
+        public static void UnmapAllActionFromKey(this IPlayerSetting playerSetting)
+        {
+            foreach (KeyCode key in playerSetting.actionMap.Values)
+            {
+                PlayerInputRegistry.UnregisterKey(key, playerSetting);
+            }
+            playerSetting.actionMap.Clear();
+        }
+    }
+
+
+    public class PlayerSetting : IPlayerSetting
+    {
         private static int playerAutoId = 1;
-        private static readonly List<Player> playerList = new List<Player>();
-        public static readonly ReadOnlyCollection<Player> players = new ReadOnlyCollection<Player>(playerList);
+        private static readonly List<PlayerSetting> playerList = new List<PlayerSetting>();
+        public static readonly ReadOnlyCollection<PlayerSetting> players = new ReadOnlyCollection<PlayerSetting>(playerList);
 
 
         public int id { get; set; }
@@ -34,10 +91,10 @@ namespace APlusOrFail
             set
             {
                 _name = value;
-                onNameChanged?.Invoke(this, value);
+                //onNameChanged?.Invoke(this, value);
             }
         }
-        public event EventHandler<Player, string> onNameChanged;
+        //public event EventHandler<PlayerSetting, string> onNameChanged;
 
         private Color _color = Color.white;
         public Color color
@@ -49,10 +106,10 @@ namespace APlusOrFail
             set
             {
                 _color = value;
-                onColorChanged?.Invoke(this, value);
+                //onColorChanged?.Invoke(this, value);
             }
         }
-        public event EventHandler<Player, Color> onColorChanged;
+        //public event EventHandler<PlayerSetting, Color> onColorChanged;
 
         private GameObject _characterSprite;
         public GameObject characterSprite
@@ -64,65 +121,30 @@ namespace APlusOrFail
             set
             {
                 _characterSprite = value;
-                onCharacterSpriteChanged?.Invoke(this, value);
+                //onCharacterSpriteChanged?.Invoke(this, value);
             }
         }
-        public event EventHandler<Player, GameObject> onCharacterSpriteChanged;
+        //public event EventHandler<PlayerSetting, GameObject> onCharacterSpriteChanged;
         
-        private readonly Dictionary<Action, KeyCode> actionMap = new Dictionary<Action, KeyCode>();
-        
+        public IDictionary<PlayerAction, KeyCode> actionMap { get; } = new Dictionary<PlayerAction, KeyCode>();
+        IReadOnlyDictionary<PlayerAction, KeyCode> IReadOnlyPlayerSetting.actionMap => readonlyActionMap;
+        private readonly IReadOnlyDictionary<PlayerAction, KeyCode> readonlyActionMap;
 
-
-        public Player()
+        public PlayerSetting()
         {
+            readonlyActionMap = new ReadOnlyDictionary<PlayerAction, KeyCode>(actionMap);
+
             id = playerAutoId++;
             name = $"Player {id}";
             playerList.Add(this);
         }
-
-        public bool HasKeyForAction(Action action)
-        {
-            return actionMap.ContainsKey(action);
-        }
-
-        public KeyCode? GetKeyForAction(Action action)
-        {
-            KeyCode key;
-            return actionMap.TryGetValue(action, out key) ? (KeyCode?)key : null;
-        }
-
-        public void MapActionToKey(Action action, KeyCode key)
-        {
-            PlayerInputRegistry.RegisterKey(key, this);
-            actionMap[action] = key;
-        }
-
-        public void UnmapActionFromKey(Action action)
-        {
-            KeyCode key;
-            if (actionMap.TryGetValue(action, out key))
-            {
-                PlayerInputRegistry.UnregisterKey(key, this);
-                actionMap.Remove(action);
-            }
-            
-        }
-
-        public void UnmapAllActionFromKey()
-        {
-            foreach (KeyCode key in actionMap.Values)
-            {
-                PlayerInputRegistry.UnregisterKey(key, this);
-            }
-            actionMap.Clear();
-        }
-
-        public void Delete()
-        {
-            playerList.Remove(this);
-            UnmapAllActionFromKey();
-            onDelete?.Invoke(this);
-        }
-        public event EventHandler<Player> onDelete;
+        
+        //public void Delete()
+        //{
+        //    playerList.Remove(this);
+        //    this.UnmapAllActionFromKey();
+        //    onDelete?.Invoke(this);
+        //}
+        //public event EventHandler<IReadOnlyPlayerSetting> onDelete;
     }
 }

@@ -4,8 +4,8 @@ namespace APlusOrFail.Character
 {
     public class CharacterPlayer : MonoBehaviour
     {
-        private Player _player;
-        public Player player
+        private IReadOnlyPlayerSetting _player;
+        public IReadOnlyPlayerSetting player
         {
             get
             {
@@ -14,9 +14,9 @@ namespace APlusOrFail.Character
             set
             {
                 _player = value;
-                onPlayerChanged?.Invoke(this, value);
+                //onPlayerChanged?.Invoke(this, value);
             }
         }
-        public event EventHandler<CharacterPlayer, Player> onPlayerChanged;
+        //public event EventHandler<CharacterPlayer, PlayerSetting> onPlayerChanged;
     }
 }

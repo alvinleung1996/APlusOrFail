@@ -21,7 +21,7 @@ namespace APlusOrFail.Objects
         private Coroutine runningCoroutine;
         private bool closingAnimationFinished = true;
 
-        Player IObjectPlayerSource.player { get; set; }
+        IReadOnlyPlayerSetting IObjectPlayerSource.player { get; set; }
 
 
         private void Awake()
@@ -77,11 +77,11 @@ namespace APlusOrFail.Objects
                         CharacterControl charControl = colliders[i].gameObject.GetComponentInParent<CharacterControl>();
                         if (!charControl.ended)
                         {
-                            int healthDelta = charControl.ChangeHealth(new PlayerHealthChange(PlayerHealthChangeReason.ByTrap, -charControl.health, gameObject));
+                            int healthDelta = charControl.ChangeHealth(new ReadOnlyPlayerHealthChange(PlayerHealthChangeReason.ByTrap, -charControl.health, gameObject));
                             if (healthDelta > 0 && roundPlayerStat != null)
                             {
                                 roundPlayerStat.scoreChanges.Add(MapManager.mapStat.roundSettings[MapManager.mapStat.currentRound]
-                                    .CreateScoreChange(PlayerScoreChangeReason.KillOtherByTrap, gameObject));
+                                    .CreatePointsChange(PlayerPointsChangeReason.KillOtherByTrap, gameObject));
                             }
                         }
                     }

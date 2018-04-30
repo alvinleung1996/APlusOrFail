@@ -73,7 +73,7 @@ namespace APlusOrFail.Setup.States.CharacterSelectionState
                         CharacterPlayer originalCharPlayer = originalCharacter.GetComponent<CharacterPlayer>();
                         selectedCharPlayer.player = originalCharPlayer.player;
                         originalCharPlayer.player = null;
-                        selectedCharPlayer.player.characterSprite = selectedChar.GetComponent<CharacterSprite>().overrideCharacterSprite;
+                        ((IPlayerSetting)selectedCharPlayer.player).characterSprite = selectedChar.GetComponent<CharacterSprite>().overrideCharacterSprite;
                     }
                     SceneStateManager.instance.Pop(this, null);
                 }

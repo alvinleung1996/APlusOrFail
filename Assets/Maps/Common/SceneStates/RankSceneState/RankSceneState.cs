@@ -12,7 +12,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         public PlayerScores playerScores;
         public TooEasyNoPointBanner tooEasyBanner;
 
-        private readonly List<Player> waitingPlayers = new List<Player>();
+        private readonly List<IReadOnlyPlayerSetting> waitingPlayers = new List<IReadOnlyPlayerSetting>();
         
         private void Awake()
         {
@@ -23,7 +23,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         {
             if (unloadedSceneState == null)
             {
-                waitingPlayers.AddRange(arg.playerStats.Select(ps => ps.player));
+                waitingPlayers.AddRange(arg.playerStats);
                 await ShowUI();
             }
         }
@@ -39,7 +39,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             {
                 for (int i = waitingPlayers.Count - 1; i >= 0; --i)
                 {
-                    bool ok = HasKeyUp(waitingPlayers[i], Player.Action.Action1);
+                    bool ok = HasKeyUp(waitingPlayers[i], PlayerAction.Action1);
                     if (ok)
                     {
                         waitingPlayers.RemoveAt(i);
@@ -69,10 +69,10 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             await tooEasyBanner.UpdateBanner(null);
         }
 
-        private bool HasKeyUp(Player player, Player.Action action)
+        private bool HasKeyUp(IReadOnlyPlayerSetting player, PlayerAction action)
         {
-            KeyCode? code = player.GetKeyForAction(action);
-            return code != null && Input.GetKeyUp(code.Value);
+            KeyCode code = player.GetKeyForAction(action);
+            return code != KeyCode.None && Input.GetKeyUp(code);
         }
     }
 }

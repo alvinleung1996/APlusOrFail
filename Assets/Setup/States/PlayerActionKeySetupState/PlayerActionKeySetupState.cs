@@ -10,25 +10,25 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
 
     public class PlayerActionKeySetupState : SceneStateBehavior<Void, Void>
     {
-        private static readonly ReadOnlyCollection<Player.Action> actionSequence = new ReadOnlyCollection<Player.Action>(new Player.Action[]{
-            Player.Action.Left,
-            Player.Action.Right,
-            Player.Action.Up,
-            Player.Action.Down,
-            Player.Action.Action1,
-            Player.Action.Action2
+        private static readonly ReadOnlyCollection<PlayerAction> actionSequence = new ReadOnlyCollection<PlayerAction>(new PlayerAction[]{
+            PlayerAction.Left,
+            PlayerAction.Right,
+            PlayerAction.Up,
+            PlayerAction.Down,
+            PlayerAction.Action1,
+            PlayerAction.Action2
         });
 
-        private static string TextForAction(Player.Action action)
+        private static string TextForAction(PlayerAction action)
         {
             switch (action)
             {
-                case Player.Action.Left: return "left";
-                case Player.Action.Right: return "right";
-                case Player.Action.Up: return "jump";
-                case Player.Action.Down: return "squat";
-                case Player.Action.Action1: return "select";
-                case Player.Action.Action2: return "cancel";
+                case PlayerAction.Left: return "left";
+                case PlayerAction.Right: return "right";
+                case PlayerAction.Up: return "jump";
+                case PlayerAction.Down: return "squat";
+                case PlayerAction.Action1: return "action1";
+                case PlayerAction.Action2: return "action2";
                 default: return "";
             }
         }
@@ -42,7 +42,7 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
         public bool cancelled { get; private set; }
 
         private CharacterPlayer charPlayer;
-        private Dictionary<Player.Action, KeyCode> actionKeyMap;
+        private Dictionary<PlayerAction, KeyCode> actionKeyMap;
         private int setupingActionIndex = 0;
 
 
@@ -55,7 +55,7 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
         protected override Task OnLoad()
         {
             charPlayer = character.GetComponent<CharacterPlayer>();
-            actionKeyMap = new Dictionary<Player.Action, KeyCode>();
+            actionKeyMap = new Dictionary<PlayerAction, KeyCode>();
             setupingActionIndex = 0;
 
             cancelled = false;
@@ -115,10 +115,10 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
                 }
                 else
                 {
-                    charPlayer.player.UnmapAllActionFromKey();
-                    foreach (KeyValuePair<Player.Action, KeyCode> pair in actionKeyMap)
+                    ((IPlayerSetting)charPlayer.player).UnmapAllActionFromKey();
+                    foreach (KeyValuePair<PlayerAction, KeyCode> pair in actionKeyMap)
                     {
-                        charPlayer.player.MapActionToKey(pair.Key, pair.Value);
+                        ((IPlayerSetting)charPlayer.player).MapActionToKey(pair.Key, pair.Value);
                     }
                     SceneStateManager.instance.Pop(this, null);
                 }

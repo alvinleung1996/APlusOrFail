@@ -32,8 +32,8 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             gameObject.SetActive(mapStat != null);
             if (mapStat != null)
             {
-                IPlayerScoreChange stat = mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges).Skip(scoreOrder).First();
-                layoutElement.numeratorWidth = Mathf.Max(stat.scoreDelta, 0);
+                IReadOnlyPlayerScoreChange stat = mapStat.GetRoundPlayerStatOfPlayer(playerOrder).SelectMany(rps => rps.scoreChanges).Skip(scoreOrder).First();
+                layoutElement.numeratorWidth = Mathf.Max(stat.delta, 0);
                 image.color = stat.rankColor;
             }
         }

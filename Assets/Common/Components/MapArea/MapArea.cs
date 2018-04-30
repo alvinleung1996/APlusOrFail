@@ -96,7 +96,7 @@ namespace APlusOrFail.Components
             if (collision.gameObject.layer == LayerId.Characters)
             {
                 CharacterControl charControl = collision.gameObject.GetComponentInParent<CharacterControl>();
-                charControl.ChangeHealth(new PlayerHealthChange(PlayerHealthChangeReason.ExitArea, -charControl.health, gameObject));
+                charControl.ChangeHealth(new ReadOnlyPlayerHealthChange(PlayerHealthChangeReason.ExitArea, -charControl.health, gameObject));
             }
         }
 

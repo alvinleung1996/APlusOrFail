@@ -9,27 +9,30 @@ namespace APlusOrFail
     public interface IReadOnlyMapStat : IMapSetting
     {
         IReadOnlyList<IReadonlyRoundStat> roundStats { get; }
-        int roundCount { get; }
-
         IReadOnlyList<IReadOnlyPlayerStat> playerStats { get; }
-        int playerCount { get; }
-
-        IReadOnlyRoundPlayerStat GetRoundPlayerStat(int roundOrder, int playerOrder);
-
+        IReadOnlyRoundPlayerStats roundPlayerStats { get; }
         int currentRound { get; }
     }
 
     public interface IMapStat : IReadOnlyMapStat
     {
         new IReadOnlyList<IRoundStat> roundStats { get; }
-
         new IReadOnlyList<IPlayerStat> playerStats { get; }
-
-        new IRoundPlayerStat GetRoundPlayerStat(int roundOrder, int playerOrder);
-
+        new IRoundPlayerStats roundPlayerStats { get; }
         new int currentRound { get; set; }
     }
+
+    public interface IReadOnlyRoundPlayerStats
+    {
+        IReadOnlyRoundPlayerStat this[int roundOrder, int playerOrder] { get; }
+    }
+
+    public interface IRoundPlayerStats : IReadOnlyRoundPlayerStats
+    {
+        new IRoundPlayerStat this[int roundOrder, int playerOrder] { get; }
+    }
     
+
 
     public enum RoundState
     {
@@ -37,79 +40,65 @@ namespace APlusOrFail
         SelectingObjects,
         PlacingObjects,
         Playing,
-        Ranking
+        Ranking,
+        Result
     }
 
     public interface IReadonlyRoundStat : IRoundSetting
     {
-        IReadOnlyMapStat mapStat { get; }
-
-        int order { get; }
         RoundState state { get; }
         bool tooEasyNoPoint { get; }
     }
 
     public interface IRoundStat : IReadonlyRoundStat
     {
-        new IMapStat mapStat { get; }
         new RoundState state { get; set; }
         new bool tooEasyNoPoint { get; set; }
     }
 
 
-    public interface IReadOnlyPlayerStat
-    {
-        IReadOnlyMapStat mapStat { get; }
 
-        int order { get; }
-        Player player { get; }
+    public interface IReadOnlyPlayerStat : IReadOnlyPlayerSetting
+    {
         bool wonOverall { get; }
     }
 
     public interface IPlayerStat : IReadOnlyPlayerStat
     {
-        new IMapStat mapStat { get; }
-
         new bool wonOverall { get; set; }
     }
 
 
+
     public interface IReadOnlyRoundPlayerStat
     {
-        IReadOnlyMapStat mapStat { get; }
-        IReadonlyRoundStat roundStat { get; }
-        IReadOnlyPlayerStat playerStat { get; }
-
         ObjectPrefabInfo selectedObjectPrefab { get; }
         bool won { get; }
-        IReadOnlyList<IPlayerHealthChange> healthChanges { get; }
-        IReadOnlyList<IPlayerScoreChange> scoreChanges { get; }
+        IReadOnlyList<IReadOnlyPlayerHealthChange> healthChanges { get; }
+        IReadOnlyList<IReadOnlyPlayerScoreChange> scoreChanges { get; }
     }
 
     public interface IRoundPlayerStat : IReadOnlyRoundPlayerStat
     {
-        new IMapStat mapStat { get; }
-        new IRoundStat roundStat { get; }
-        new IPlayerStat playerStat { get; }
-
         new ObjectPrefabInfo selectedObjectPrefab { get; set; }
         new bool won { get; set; }
-        new IList<IPlayerHealthChange> healthChanges { get; }
-        new IList<IPlayerScoreChange> scoreChanges { get; }
+        new IList<IReadOnlyPlayerHealthChange> healthChanges { get; }
+        new IList<IReadOnlyPlayerScoreChange> scoreChanges { get; }
     }
 
 
-    public interface IPlayerHealthChange
+
+    public interface IReadOnlyPlayerHealthChange
     {
         PlayerHealthChangeReason reason { get; }
-        int healthDelta { get; }
+        int delta { get; }
         GameObject cause { get; }
     }
 
-    public interface IPlayerScoreChange
+    public interface IReadOnlyPlayerScoreChange
     {
-        PlayerScoreChangeReason reason { get; }
-        int scoreDelta { get; }
+        PlayerPointsChangeReason reason { get; }
+        int delta { get; }
         Color rankColor { get; }
         GameObject cause { get; }
     }
@@ -121,7 +110,7 @@ namespace APlusOrFail
         ExitArea
     }
 
-    public enum PlayerScoreChangeReason
+    public enum PlayerPointsChangeReason
     {
         No,
         Won,
@@ -129,19 +118,23 @@ namespace APlusOrFail
     }
 
 
+
     public static class MapStatExtensions
     {
         public static IEnumerable<IRoundPlayerStat> GetRoundPlayerStatOfRound(this IMapStat mapStat, int roundOrder)
         {
-            return Enumerable.Range(0, mapStat.playerCount).Select(i => mapStat.GetRoundPlayerStat(roundOrder, i));
+            return Enumerable.Range(0, mapStat.playerStats.Count).Select(i => mapStat.roundPlayerStats[roundOrder, i]);
         }
 
         public static IEnumerable<IRoundPlayerStat> GetRoundPlayerStatOfPlayer(this IMapStat mapStat, int playerOrder)
         {
-            return Enumerable.Range(0, mapStat.roundCount).Select(i => mapStat.GetRoundPlayerStat(i, playerOrder));
+            return Enumerable.Range(0, mapStat.roundStats.Count).Select(i => mapStat.roundPlayerStats[i, playerOrder]);
         }
 
-        public static IRoundPlayerStat GetRoundPlayerStat(this IMapStat mapStat, int roundOrder, Player player) =>
-            mapStat.GetRoundPlayerStat(roundOrder, mapStat.playerStats.FindIndex(ps => ps.player == player));
+        public static IRoundPlayerStat GetRoundPlayerStat(this IMapStat mapStat, int roundOrder, IReadOnlyPlayerSetting player) =>
+            mapStat.roundPlayerStats[roundOrder, mapStat.playerStats.FindIndex(ps => ps == player)];
+
+        public static IReadOnlyPlayerScoreChange CreatePointsChange(this IRoundSetting setting, PlayerPointsChangeReason reason, GameObject cause) =>
+            new ReadOnlyPlayerPointsChange(reason, setting.pointsMap[reason], setting.rankColorMap[reason], cause);
     }
 }

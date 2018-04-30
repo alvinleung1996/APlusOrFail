@@ -5,6 +5,6 @@ namespace APlusOrFail.Objects
 {
     public interface IObjectPlayerSource
     {
-        Player player { get; set; }
+        IReadOnlyPlayerSetting player { get; set; }
     }
 }

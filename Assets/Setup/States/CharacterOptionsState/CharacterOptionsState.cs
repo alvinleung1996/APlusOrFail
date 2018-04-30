@@ -98,7 +98,7 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
                 CharacterPlayer charPlayer = character.GetComponent<CharacterPlayer>();
-                charPlayer.player.Delete();
+                //TODO: delete player;
                 charPlayer.player = null;
                 SceneStateManager.instance.Pop(this, null);
             }

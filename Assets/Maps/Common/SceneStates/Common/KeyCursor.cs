@@ -10,8 +10,8 @@ namespace APlusOrFail.Maps.SceneStates
         public RectTransform nameBackground;
         public Text nameText;
 
-        private Player _player;
-        public Player player {
+        private IReadOnlyPlayerSetting _player;
+        public IReadOnlyPlayerSetting player {
             get
             {
                 return _player;
@@ -40,10 +40,10 @@ namespace APlusOrFail.Maps.SceneStates
         {
             if (player != null)
             {
-                bool leftPressed = HasKeyPressed(player, Player.Action.Left);
-                bool rightPressed = HasKeyPressed(player, Player.Action.Right);
-                bool upPressed = HasKeyPressed(player, Player.Action.Up);
-                bool downPressed = HasKeyPressed(player, Player.Action.Down);
+                bool leftPressed = HasKeyPressed(player, PlayerAction.Left);
+                bool rightPressed = HasKeyPressed(player, PlayerAction.Right);
+                bool upPressed = HasKeyPressed(player, PlayerAction.Up);
+                bool downPressed = HasKeyPressed(player, PlayerAction.Down);
 
                 bool left = leftPressed && !rightPressed;
                 bool right = rightPressed && !leftPressed;
@@ -84,10 +84,10 @@ namespace APlusOrFail.Maps.SceneStates
             }
         }
 
-        protected bool HasKeyPressed(Player player, Player.Action action)
+        protected bool HasKeyPressed(IReadOnlyPlayerSetting player, PlayerAction action)
         {
-            KeyCode? key = player.GetKeyForAction(action);
-            return key != null && Input.GetKey(key.Value);
+            KeyCode key = player.GetKeyForAction(action);
+            return key != KeyCode.None && Input.GetKey(key);
         }
     }
 }

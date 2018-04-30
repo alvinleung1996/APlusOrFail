@@ -5,6 +5,7 @@ using UnityEngine.UI;
 namespace APlusOrFail.NameTagCanvas
 {
     [RequireComponent(typeof(RectTransform))]
+    [System.Obsolete]
     public class NameTagCanvas0 : MonoBehaviour
     {
         public class NameTagInfo
@@ -40,8 +41,6 @@ namespace APlusOrFail.NameTagCanvas
             private readonly NameTagCanvas0 nameTagCanvas;
             private readonly RectTransform nameTagRectTrasform;
             private readonly Text nameTagText;
-
-            private bool enable;
 
             public NameTagInfo(NameTagCanvas0 nameTagCanvas, Transform targetTransform)
             {

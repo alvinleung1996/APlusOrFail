@@ -14,72 +14,58 @@ namespace APlusOrFail.Maps
         protected class MapSetting : IMapSetting
         {
             public string name { get; }
-            public IReadOnlyList<IRoundSetting> roundSettings { get; }
             public MapArea mapArea { get; }
             public AutoResizeCamera camera { get; }
+            public IReadOnlyList<IRoundSetting> roundSettings { get; }
+            public int minRoundCount { get; }
+            public IReadOnlyList<IReadOnlyPlayerSetting> playerSettings { get; }
+            public int passPoints { get; }
 
-            public MapSetting(string name, IEnumerable<IRoundSetting> roundSettings, MapArea mapArea, AutoResizeCamera camera)
+            public MapSetting(string name, MapArea mapArea, AutoResizeCamera camera,
+                IEnumerable<IRoundSetting> roundSettings, int minRoundCount,
+                IEnumerable<IReadOnlyPlayerSetting> playerSettings, int passPoints)
             {
                 this.name = name;
-                this.roundSettings = new ReadOnlyCollection<IRoundSetting>(roundSettings.ToList());
                 this.mapArea = mapArea;
                 this.camera = camera;
+                this.roundSettings = roundSettings.ToList();
+                this.minRoundCount = minRoundCount;
+                this.playerSettings = playerSettings.ToList();
+                this.passPoints = passPoints;
             }
         }
 
         protected class RoundSetting : IRoundSetting
         {
             public string name { get; }
-            public int roundScore { get; }
-            public IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
+            public int points { get; }
             public MapGridPlacer spawnArea { get; }
-            public IRoundScoreSetting scoreSetting { get; }
-            public IRoundRankColorSetting rankColorSetting { get; }
+            public IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
+            public IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap { get; }
+            public IReadOnlyDictionary<PlayerPointsChangeReason, Color> rankColorMap { get; }
 
-            public RoundSetting(string name, int roundScore, IEnumerable<ObjectPrefabInfo> usableObjects, MapGridPlacer spawnArea,
-                IRoundScoreSetting scoreSetting, IRoundRankColorSetting rankColorSetting)
+            public RoundSetting(string name, int points, MapGridPlacer spawnArea, IEnumerable<ObjectPrefabInfo> usableObjects,
+                IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap, IReadOnlyDictionary<PlayerPointsChangeReason, Color> rankColorMap)
             {
                 this.name = name;
-                this.roundScore = roundScore;
-                this.usableObjects = new ReadOnlyCollection<ObjectPrefabInfo>(usableObjects.ToList());
+                this.points = points;
                 this.spawnArea = spawnArea;
-                this.scoreSetting = scoreSetting;
-                this.rankColorSetting = rankColorSetting;
+                this.usableObjects = new ReadOnlyCollection<ObjectPrefabInfo>(usableObjects.ToList());
+                this.pointsMap = pointsMap.ToDictionary(p => p.Key, p => p.Value);
+                this.rankColorMap = rankColorMap.ToDictionary(p => p.Key, p => p.Value);
             }
         }
 
-        protected class RoundScoreSetting : IRoundScoreSetting
+        protected static IReadOnlyDictionary<PlayerPointsChangeReason, int> defaultRoundPointSetting => new Dictionary<PlayerPointsChangeReason, int>
         {
-            private Dictionary<PlayerScoreChangeReason, int> map = new Dictionary<PlayerScoreChangeReason, int>();
-
-            public int this[PlayerScoreChangeReason reason]
-            {
-                get { return map[reason]; }
-                set { map[reason] = value; }
-            }
-        }
-
-        protected static IRoundScoreSetting defaultRoundScoreSetting { get; } = new RoundScoreSetting
-        {
-            [PlayerScoreChangeReason.Won] = 30,
-            [PlayerScoreChangeReason.KillOtherByTrap] = 10
+            [PlayerPointsChangeReason.Won] = 40,
+            [PlayerPointsChangeReason.KillOtherByTrap] = 10
         };
 
-        protected class RoundRankColorSetting : IRoundRankColorSetting
+        protected static IReadOnlyDictionary<PlayerPointsChangeReason, Color> defaultRoundRankColorSetting => new Dictionary<PlayerPointsChangeReason, Color>
         {
-            private Dictionary<PlayerScoreChangeReason, Color> map = new Dictionary<PlayerScoreChangeReason, Color>();
-
-            public Color this[PlayerScoreChangeReason reason]
-            {
-                get { return map[reason]; }
-                set { map[reason] = value; }
-            }
-        }
-
-        protected IRoundRankColorSetting defaultRoundRankColorSetting => new RoundRankColorSetting
-        {
-            [PlayerScoreChangeReason.Won] = Color.green,
-            [PlayerScoreChangeReason.KillOtherByTrap] = Color.yellow
+            [PlayerPointsChangeReason.Won] = Color.green,
+            [PlayerPointsChangeReason.KillOtherByTrap] = Color.yellow
         };
 
 
@@ -87,7 +73,8 @@ namespace APlusOrFail.Maps
         public string mapName;
         public MapArea mapArea;
         public new AutoResizeCamera camera;
-          
+        public GameObject test_characterSprite;
+
         public IMapStat stat { get; protected set; }
 
 
@@ -95,7 +82,7 @@ namespace APlusOrFail.Maps
         {
             if (((IMapManager)this).Register())
             {
-                stat = new MapStat(GetMapSetting());
+                stat = new MapStat(mapSetting);
             }
             else
             {
@@ -114,8 +101,49 @@ namespace APlusOrFail.Maps
             ((IMapManager)this).Unregister();
         }
 
-        protected virtual IMapSetting GetMapSetting() => new MapSetting(mapName, GetRoundSettings(), mapArea, camera);
+        protected virtual IMapSetting mapSetting => new MapSetting(mapName, mapArea, camera, roundSettings, minRoundCount, playerSettings, passPoints);
+        protected abstract IEnumerable<IRoundSetting> roundSettings { get; }
+        protected abstract int minRoundCount { get; }
+        protected virtual IEnumerable<IReadOnlyPlayerSetting> playerSettings
+        {
+            get
+            {
+                if (PlayerSetting.players.Count == 0)
+                {
+                    PlayerSetting player1 = new PlayerSetting
+                    {
+                        characterSprite = test_characterSprite,
+                        name = "Trim",
+                        color = Color.blue
+                    };
+                    player1.MapActionToKey(PlayerAction.Left, KeyCode.Keypad4);
+                    player1.MapActionToKey(PlayerAction.Right, KeyCode.Keypad6);
+                    player1.MapActionToKey(PlayerAction.Up, KeyCode.Keypad8);
+                    player1.MapActionToKey(PlayerAction.Down, KeyCode.Keypad5);
+                    player1.MapActionToKey(PlayerAction.Action1, KeyCode.Keypad7);
+                    player1.MapActionToKey(PlayerAction.Action2, KeyCode.Keypad9);
 
-        protected abstract IEnumerable<IRoundSetting> GetRoundSettings();
+                    PlayerSetting player2 = new PlayerSetting
+                    {
+                        characterSprite = test_characterSprite,
+                        name = "Leung",
+                        color = Color.red
+                    };
+                    player2.MapActionToKey(PlayerAction.Left, KeyCode.LeftArrow);
+                    player2.MapActionToKey(PlayerAction.Right, KeyCode.RightArrow);
+                    player2.MapActionToKey(PlayerAction.Up, KeyCode.UpArrow);
+                    player2.MapActionToKey(PlayerAction.Down, KeyCode.DownArrow);
+                    player2.MapActionToKey(PlayerAction.Action1, KeyCode.RightAlt);
+                    player2.MapActionToKey(PlayerAction.Action2, KeyCode.RightControl);
+
+                    return new IPlayerSetting[] { player1, player2 };
+                }
+                else
+                {
+                    return PlayerSetting.players;
+                }
+            }
+        }
+        protected abstract int passPoints { get; }
     }
 }

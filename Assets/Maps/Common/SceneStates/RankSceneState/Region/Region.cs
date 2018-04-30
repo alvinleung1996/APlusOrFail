@@ -23,7 +23,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             this.roundStat = roundStat;
             gameObject.SetActive(roundStat != null);
             nameText.text = roundStat?.name ?? "";
-            layoutElement.numeratorWidth = roundStat?.roundScore ?? 0;
+            layoutElement.numeratorWidth = roundStat?.points ?? 0;
         }
     }
 }
