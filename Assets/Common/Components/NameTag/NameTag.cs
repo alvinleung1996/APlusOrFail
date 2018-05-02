@@ -10,7 +10,7 @@ namespace APlusOrFail.Components
     {
         private RectTransform rectTransform;
         public Text nameText;
-        public Vector2 worldOffset = Vector2.zero;
+        public Vector2 worldOffset;
 
         public new Camera camera { get; set; }
         public RectTransform canvasRectTransform { get; set; }
@@ -45,7 +45,7 @@ namespace APlusOrFail.Components
             }
         }
 
-        public void LateUpdate()
+        private void Update()
         {
             Vector2 screenPoint = camera.WorldToScreenPoint(targetTransform.transform.position + ((Vector3)worldOffset));
             Vector2 canvasPoint;

@@ -57,7 +57,7 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     NameTag nameTag;
                     if (i >= nameTags.Count)
                     {
-                        nameTag = Instantiate(nameTagPrefab, canvasRectTransform);
+                        nameTag = Instantiate(nameTagPrefab, canvasRectTransform.transform);
                         nameTag.camera = AutoResizeCamera.instance.GetComponent<Camera>();
                         nameTag.canvasRectTransform = canvasRectTransform;
                         nameTags.Add(nameTag);
@@ -67,6 +67,7 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                         nameTag = nameTags[i];
                     }
                     nameTag.targetTransform = charPlayer.transform;
+                    nameTag.playerSetting = player;
 
 
                     AutoResizeCamera.instance.Trace(charControl.transform);

@@ -1359,6 +1359,8 @@ MonoBehaviour:
   canvas: {fileID: 223762505260536190}
   characterPrefab: {fileID: 114985746334063676, guid: a5da0d3fc54601b4da9d221a9e2c1a80,
     type: 2}
+  nameTagPrefab: {fileID: 114941372584748122, guid: f68e11b25f2fe3b4597273d169b2747b,
+    type: 2}
 --- !u!114 &114844849486879796
 MonoBehaviour:
   m_ObjectHideFlags: 1

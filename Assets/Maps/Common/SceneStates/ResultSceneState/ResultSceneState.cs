@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,9 +13,10 @@ namespace APlusOrFail.Maps.SceneStates
     {
         public Canvas canvas;
         public CharacterControl characterPrefab;
+        public NameTag nameTagPrefab;
 
-        private List<CharacterControl> attacedCharacters = new List<CharacterControl>();
-        private readonly List<IReadOnlySharedPlayerSetting> waitingPlayers = new List<IReadOnlySharedPlayerSetting>();
+        private readonly List<ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>> waitingPlayers
+            = new List<ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>>();
 
         private void Awake()
         {
@@ -27,7 +28,10 @@ namespace APlusOrFail.Maps.SceneStates
             if (unloadedSceneState == null)
             {
                 canvas.gameObject.SetActive(true);
-                
+
+                RectTransform canvasRectTransform = canvas.GetComponent<RectTransform>();
+                Camera camera = AutoResizeCamera.instance.GetComponent<Camera>();
+
                 foreach (IPlayerStat ps in arg.playerStats.Where(ps => ps.wonOverall))
                 {
                     CharacterControl charControl = Instantiate(
@@ -35,12 +39,19 @@ namespace APlusOrFail.Maps.SceneStates
                         arg.roundSettings[arg.currentRound - 1].spawnArea.transform.position,
                         characterPrefab.transform.rotation
                     );
-                    attacedCharacters.Add(charControl);
 
                     charControl.GetComponent<CharacterSpriteId>().spriteId = ps.characterSpriteId;
                     charControl.GetComponent<CharacterPlayer>().playerSetting = ps;
+
                     AutoResizeCamera.instance.Trace(charControl.transform);
-                    waitingPlayers.Add(ps);
+
+                    NameTag nameTag = Instantiate(nameTagPrefab, canvas.transform);
+                    nameTag.camera = camera;
+                    nameTag.canvasRectTransform = canvasRectTransform;
+                    nameTag.targetTransform = charControl.transform;
+                    nameTag.playerSetting = ps;
+
+                    waitingPlayers.Add(new ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>(ps, charControl, nameTag));
                 }
             }
             return Task.CompletedTask;
@@ -52,10 +63,15 @@ namespace APlusOrFail.Maps.SceneStates
             {
                 for (int i = waitingPlayers.Count - 1; i >= 0; --i)
                 {
-                    bool ok = HasKeyUp(waitingPlayers[i], PlayerAction.Action1);
+                    ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag> tuple = waitingPlayers[i];
+
+                    bool ok = HasKeyUp(tuple.Item1, PlayerAction.Action1);
                     if (ok)
                     {
                         waitingPlayers.RemoveAt(i);
+                        Destroy(tuple.Item3.gameObject);
+                        AutoResizeCamera.instance.Untrace(tuple.Item2.transform);
+                        Destroy(tuple.Item2.gameObject);
                     }
                 }
 
@@ -70,12 +86,13 @@ namespace APlusOrFail.Maps.SceneStates
         {
             canvas.gameObject.SetActive(false);
 
-            foreach (CharacterControl charControl in attacedCharacters)
+            AutoResizeCamera.instance.UntraceAll();
+            foreach (var tuple in waitingPlayers)
             {
-                Destroy(charControl.gameObject);
-                AutoResizeCamera.instance.Untrace(charControl.transform);
+                Destroy(tuple.Item3.gameObject);
+                Destroy(tuple.Item2.gameObject);
             }
-            attacedCharacters.Clear();
+            waitingPlayers.Clear();
 
             return Task.CompletedTask;
         }
