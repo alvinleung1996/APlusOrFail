@@ -1,17 +1,16 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.CharacterOptionState
+namespace APlusOrFail.Setup.SceneStates
 {
     using Character;
-    using PlayerNameAndColorSetupState;
-    using CharacterSelectionState;
-    using PlayerActionKeySetupState;
+    using Components;
 
-    public class CharacterOptionsState : SceneStateBehavior<Void, Void>
+    public class CharacterOptionsState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, Void>
     {
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public Button changeNameColorButton;
         public Button chooseCharacterButton;
         public Button remapActionKeyButton;
@@ -22,38 +21,27 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         public CharacterSelectionState charSelectionUIScene;
         public PlayerActionKeySetupState actionKeySetupUIScene;
 
-        public GameObject character { get; set; }
-
-        private CharacterSelectionState activeCharSelectionUIScene;
-
-        private void Start()
+        private void Awake()
         {
             changeNameColorButton.onClick.AddListener(OnChangeNameColorButtonClicked);
             chooseCharacterButton.onClick.AddListener(OnChooseCharacterButtonClicked);
             remapActionKeyButton.onClick.AddListener(OnRemapActionKeyButtonClicked);
             closeButton.onClick.AddListener(OnCloseButtonClicked);
             deletePlayerButton.onClick.AddListener(OnDeletePlayerButtonClicked);
-
-            HideUI();
+            uiScene.gameObject.SetActive(false);
         }
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            ShowUI();
-            if (activeCharSelectionUIScene != null)
-            {
-                if (activeCharSelectionUIScene.selectedCharacter != character)
-                {
-                    character = activeCharSelectionUIScene.selectedCharacter;
-                }
-                activeCharSelectionUIScene = null;
-            }
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
             return Task.CompletedTask;
         }
 
         protected override Task OnBlur()
         {
-            HideUI();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
             return Task.CompletedTask;
         }
 
@@ -61,8 +49,7 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.Push(nameColorSetupUIScene, null);
-                nameColorSetupUIScene.character = character;
+                PushSceneState(nameColorSetupUIScene, arg);
             }
         }
 
@@ -70,9 +57,7 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.Push(charSelectionUIScene, null);
-                activeCharSelectionUIScene = charSelectionUIScene;
-                activeCharSelectionUIScene.originalCharacter = character;
+                PushSceneState(charSelectionUIScene, arg);
             }
         }
 
@@ -80,8 +65,7 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.Push(actionKeySetupUIScene, null);
-                actionKeySetupUIScene.character = character;
+                PushSceneState(actionKeySetupUIScene, arg);
             }
         }
 
@@ -89,7 +73,7 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.Pop(this, null);
+                PopSceneState(null);
             }
         }
 
@@ -97,22 +81,12 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                CharacterPlayer charPlayer = character.GetComponent<CharacterPlayer>();
-                //TODO: delete player;
-                charPlayer.player = null;
-                SceneStateManager.instance.Pop(this, null);
+                arg.Item2.character.GetComponent<CharacterPlayer>().playerSetting = null;
+                arg.Item2.Free();
+                arg.Item1.characterPlayerSettingMap[arg.Item2.character] = null;
+                arg.Item1.UnmapAllActionFromKey(arg.Item2);
+                PopSceneState(null);
             }
         }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
-        }
-
     }
 }

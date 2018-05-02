@@ -58,7 +58,7 @@ namespace APlusOrFail
 
 
 
-    public interface IReadOnlyPlayerStat : IReadOnlyPlayerSetting
+    public interface IReadOnlyPlayerStat : IReadOnlySharedPlayerSetting
     {
         bool wonOverall { get; }
     }
@@ -131,7 +131,23 @@ namespace APlusOrFail
             return Enumerable.Range(0, mapStat.roundStats.Count).Select(i => mapStat.roundPlayerStats[i, playerOrder]);
         }
 
-        public static IRoundPlayerStat GetRoundPlayerStat(this IMapStat mapStat, int roundOrder, IReadOnlyPlayerSetting player) =>
+        public static bool TryGetRoundPlayerStat(this IMapStat mapStat, int roundOrder, IReadOnlySharedPlayerSetting player, 
+            out IRoundPlayerStat roundPlayerStat)
+        {
+            int playerOrder = mapStat.playerStats.FindIndex(ps => ps == player);
+            if (roundOrder >= 0 && roundOrder < mapStat.roundStats.Count && playerOrder >= 0 && playerOrder < mapStat.playerSettings.Count)
+            {
+                roundPlayerStat = mapStat.roundPlayerStats[roundOrder, playerOrder];
+                return true;
+            }
+            else
+            {
+                roundPlayerStat = null;
+                return false;
+            }
+        }
+
+        public static IRoundPlayerStat GetRoundPlayerStat(this IMapStat mapStat, int roundOrder, IReadOnlySharedPlayerSetting player) =>
             mapStat.roundPlayerStats[roundOrder, mapStat.playerStats.FindIndex(ps => ps == player)];
 
         public static IReadOnlyPlayerScoreChange CreatePointsChange(this IRoundSetting setting, PlayerPointsChangeReason reason, GameObject cause) =>

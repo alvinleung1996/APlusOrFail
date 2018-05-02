@@ -18,7 +18,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 
             private bool cancelUp;
 
-            public KeyTracker(IReadOnlyPlayerSetting player, PlayerAction action)
+            public KeyTracker(IReadOnlySharedPlayerSetting player, PlayerAction action)
             {
                 this.action = action;
                 code = player.GetKeyForAction(action);
@@ -76,7 +76,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
         {
             base.Start();
 
-            attachedObject = Instantiate(objectPrefab, MapManager.mapStat.mapArea.transform);
+            attachedObject = Instantiate(objectPrefab, MapArea.instance.transform);
 
             IObjectPlayerSource playerSource = attachedObject.GetComponent<IObjectPlayerSource>();
             if (playerSource != null) playerSource.player = player;
@@ -125,7 +125,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
                 base.Update();
             }
             
-            objectPlacer.gridPosition = MapManager.mapStat.mapArea.WorldToGridPosition(camera.ViewportToWorldPoint(viewportLocation));
+            objectPlacer.gridPosition = MapArea.instance.WorldToGridPosition(camera.ViewportToWorldPoint(viewportLocation));
             bool placable = objectPlacer.IsRegisterable();
 
             if (placable)

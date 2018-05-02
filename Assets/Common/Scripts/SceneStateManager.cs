@@ -20,6 +20,7 @@ namespace APlusOrFail
 
 
         public UnityEngine.Object initialSceneState;
+        public event EventHandler<SceneStateManager, ValueTuple<ISceneState, object>> onLastSceneStatePoped;
 
         private bool asyncUpdating;
         private readonly Stack<ISceneState> sceneStateStack = new Stack<ISceneState>();
@@ -146,6 +147,11 @@ namespace APlusOrFail
                         NonNullTask(newSceneState?.Focus(oldSceneState, pendingResult)),
                         oldSceneState.Unload()
                     );
+
+                    if (newSceneState == null)
+                    {
+                        onLastSceneStatePoped?.Invoke(this, new ValueTuple<ISceneState, object>(oldSceneState, pendingResult));
+                    }
                     break;
             }
 

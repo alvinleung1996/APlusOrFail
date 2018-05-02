@@ -4,12 +4,11 @@ namespace APlusOrFail
 {
     public class Selectable : MonoBehaviour
     {
-
-        public event EventHandler<Selectable> OnSelected;
+        public event EventHandler<Selectable> onSelected;
     
         private void OnMouseDown()
         {
-            OnSelected?.Invoke(this);
+            onSelected?.Invoke(this);
         }
     }
 }

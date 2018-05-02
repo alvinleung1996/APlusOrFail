@@ -4,30 +4,31 @@ using UnityEngine;
 
 namespace APlusOrFail
 {
+    [Obsolete]
     public static class PlayerInputRegistry
     {
-        private static readonly Dictionary<KeyCode, IReadOnlyPlayerSetting> registry = new Dictionary<KeyCode, IReadOnlyPlayerSetting>();
+        private static readonly Dictionary<KeyCode, IReadOnlySharedPlayerSetting> registry = new Dictionary<KeyCode, IReadOnlySharedPlayerSetting>();
 
         public static bool HasRegistered(KeyCode key)
         {
             return registry.ContainsKey(key);
         }
 
-        public static bool HasRegisteredByOther(KeyCode key, IReadOnlyPlayerSetting exceptPlayer)
+        public static bool HasRegisteredByOther(KeyCode key, IReadOnlySharedPlayerSetting exceptPlayer)
         {
-            IReadOnlyPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
+            IReadOnlySharedPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
             return associatedPlayer != null && associatedPlayer != exceptPlayer;
         }
 
-        public static IReadOnlyPlayerSetting GetAssociatedPlayer(KeyCode key)
+        public static IReadOnlySharedPlayerSetting GetAssociatedPlayer(KeyCode key)
         {
-            IReadOnlyPlayerSetting player;
+            IReadOnlySharedPlayerSetting player;
             return registry.TryGetValue(key, out player) ? player : null;
         }
 
-        public static void RegisterKey(KeyCode key, IReadOnlyPlayerSetting player)
+        public static void RegisterKey(KeyCode key, IReadOnlySharedPlayerSetting player)
         {
-            IReadOnlyPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
+            IReadOnlySharedPlayerSetting associatedPlayer = GetAssociatedPlayer(key);
             if (associatedPlayer == null)
             {
                 registry[key] = player;
@@ -38,7 +39,7 @@ namespace APlusOrFail
             }
         }
 
-        public static void UnregisterKey(KeyCode key, IReadOnlyPlayerSetting player)
+        public static void UnregisterKey(KeyCode key, IReadOnlySharedPlayerSetting player)
         {
             if (GetAssociatedPlayer(key) == player)
             {

@@ -12,8 +12,6 @@ namespace APlusOrFail
     public class MapStat : IMapStat
     {
         public string name { get; }
-        public MapArea mapArea { get; }
-        public AutoResizeCamera camera { get; }
         
         public IReadOnlyList<IRoundStat> roundStats { get; }
         IReadOnlyList<IRoundSetting> IMapSetting.roundSettings => roundStats;
@@ -21,7 +19,7 @@ namespace APlusOrFail
         public int minRoundCount { get; }
 
         public IReadOnlyList<IPlayerStat> playerStats { get; }
-        IReadOnlyList<IReadOnlyPlayerSetting> IMapSetting.playerSettings => playerStats;
+        IReadOnlyList<IReadOnlySharedPlayerSetting> IMapSetting.playerSettings => playerStats;
         IReadOnlyList<IReadOnlyPlayerStat> IReadOnlyMapStat.playerStats => playerStats;
 
         public IRoundPlayerStats roundPlayerStats { get; }
@@ -34,8 +32,6 @@ namespace APlusOrFail
         public MapStat(IMapSetting mapSetting)
         {
             name = mapSetting.name;
-            mapArea = mapSetting.mapArea;
-            camera = mapSetting.camera;
 
             List<IRoundStat> roundStats = new List<IRoundStat>(mapSetting.roundSettings.Count);
             for (int i = 0; i < mapSetting.roundSettings.Count; ++i)
@@ -48,7 +44,7 @@ namespace APlusOrFail
             List<IPlayerStat> playerStats = new List<IPlayerStat>(mapSetting.playerSettings.Count);
             for (int j = 0; j < mapSetting.playerSettings.Count; ++j)
             {
-                playerStats.Add(new PlayerStat(PlayerSetting.players[j]));
+                playerStats.Add(new PlayerStat(mapSetting.playerSettings[j]));
             }
             this.playerStats = new ReadOnlyCollection<IPlayerStat>(playerStats);
 
@@ -106,15 +102,15 @@ namespace APlusOrFail
         public int id { get; }
         public string name { get; }
         public Color color { get; }
-        public GameObject characterSprite { get; }
+        public int characterSpriteId { get; }
         public IReadOnlyDictionary<PlayerAction, KeyCode> actionMap { get; }
 
-        public PlayerStat(IReadOnlyPlayerSetting playerSetting)
+        public PlayerStat(IReadOnlySharedPlayerSetting playerSetting)
         {
             id = playerSetting.id;
             name = playerSetting.name;
             color = playerSetting.color;
-            characterSprite = playerSetting.characterSprite;
+            characterSpriteId = playerSetting.characterSpriteId;
             actionMap = playerSetting.actionMap.ToDictionary(p => p.Key, p => p.Value);
         }
     }

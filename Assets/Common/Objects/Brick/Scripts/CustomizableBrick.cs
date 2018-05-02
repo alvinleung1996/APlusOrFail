@@ -67,11 +67,9 @@ namespace APlusOrFail.Objects
                 rect.width = _width;
                 rect.height = _height;
                 brickRect.gridLocalRect = rect;
-
-                Vector3 scale = brickRect.transform.localScale;
-                scale.x = rect.width;
-                scale.y = rect.height;
-                brickRect.transform.localScale = scale;
+                brickRenderer.size = rect.size;
+                
+                brickRect.transform.localPosition = rect.center;
 
                 brickRenderer.color = _color;
             }

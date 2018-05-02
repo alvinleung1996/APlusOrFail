@@ -10,13 +10,11 @@ namespace APlusOrFail
     public interface IMapSetting
     {
         string name { get; }
-        MapArea mapArea { get; }
-        AutoResizeCamera camera { get; }
 
         IReadOnlyList<IRoundSetting> roundSettings { get; }
         int minRoundCount { get; }
 
-        IReadOnlyList<IReadOnlyPlayerSetting> playerSettings { get; }
+        IReadOnlyList<IReadOnlySharedPlayerSetting> playerSettings { get; }
 
         int passPoints { get; }
     }

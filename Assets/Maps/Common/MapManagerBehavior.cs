@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace APlusOrFail.Maps
 {
@@ -18,12 +20,12 @@ namespace APlusOrFail.Maps
             public AutoResizeCamera camera { get; }
             public IReadOnlyList<IRoundSetting> roundSettings { get; }
             public int minRoundCount { get; }
-            public IReadOnlyList<IReadOnlyPlayerSetting> playerSettings { get; }
+            public IReadOnlyList<IReadOnlySharedPlayerSetting> playerSettings { get; }
             public int passPoints { get; }
 
             public MapSetting(string name, MapArea mapArea, AutoResizeCamera camera,
                 IEnumerable<IRoundSetting> roundSettings, int minRoundCount,
-                IEnumerable<IReadOnlyPlayerSetting> playerSettings, int passPoints)
+                IEnumerable<IReadOnlySharedPlayerSetting> playerSettings, int passPoints)
             {
                 this.name = name;
                 this.mapArea = mapArea;
@@ -69,6 +71,7 @@ namespace APlusOrFail.Maps
         };
 
 
+        public SceneStateManager sceneStateManager;
         public DefaultSceneState defaultSceneState;
         public string mapName;
         public MapArea mapArea;
@@ -93,7 +96,8 @@ namespace APlusOrFail.Maps
 
         protected virtual void Start()
         {
-            FindObjectOfType<SceneStateManager>().Push(defaultSceneState, stat);
+            sceneStateManager.onLastSceneStatePoped += OnLastSceneStatePoped;
+            sceneStateManager.Push(defaultSceneState, stat);
         }
 
         protected virtual void OnDestroy()
@@ -104,46 +108,54 @@ namespace APlusOrFail.Maps
         protected virtual IMapSetting mapSetting => new MapSetting(mapName, mapArea, camera, roundSettings, minRoundCount, playerSettings, passPoints);
         protected abstract IEnumerable<IRoundSetting> roundSettings { get; }
         protected abstract int minRoundCount { get; }
-        protected virtual IEnumerable<IReadOnlyPlayerSetting> playerSettings
+        protected virtual IEnumerable<IReadOnlySharedPlayerSetting> playerSettings
         {
             get
             {
-                if (PlayerSetting.players.Count == 0)
+                if (SharedData.CharacterSpriteIdMap == null || SharedData.playerSettings == null)
                 {
-                    PlayerSetting player1 = new PlayerSetting
+                    SharedData.CharacterSpriteIdMap = new Dictionary<int, GameObject>
                     {
-                        characterSprite = test_characterSprite,
-                        name = "Trim",
-                        color = Color.blue
+                        [0] = test_characterSprite
                     };
-                    player1.MapActionToKey(PlayerAction.Left, KeyCode.Keypad4);
-                    player1.MapActionToKey(PlayerAction.Right, KeyCode.Keypad6);
-                    player1.MapActionToKey(PlayerAction.Up, KeyCode.Keypad8);
-                    player1.MapActionToKey(PlayerAction.Down, KeyCode.Keypad5);
-                    player1.MapActionToKey(PlayerAction.Action1, KeyCode.Keypad7);
-                    player1.MapActionToKey(PlayerAction.Action2, KeyCode.Keypad9);
 
-                    PlayerSetting player2 = new PlayerSetting
-                    {
-                        characterSprite = test_characterSprite,
-                        name = "Leung",
-                        color = Color.red
-                    };
-                    player2.MapActionToKey(PlayerAction.Left, KeyCode.LeftArrow);
-                    player2.MapActionToKey(PlayerAction.Right, KeyCode.RightArrow);
-                    player2.MapActionToKey(PlayerAction.Up, KeyCode.UpArrow);
-                    player2.MapActionToKey(PlayerAction.Down, KeyCode.DownArrow);
-                    player2.MapActionToKey(PlayerAction.Action1, KeyCode.RightAlt);
-                    player2.MapActionToKey(PlayerAction.Action2, KeyCode.RightControl);
+                    ReadOnlySharedPlayerSetting player1 = new ReadOnlySharedPlayerSetting(
+                        0, "Trim", Color.blue, 0, new Dictionary<PlayerAction, KeyCode>
+                        {
+                            [PlayerAction.Left] = KeyCode.Keypad4,
+                            [PlayerAction.Right] = KeyCode.Keypad6,
+                            [PlayerAction.Up] = KeyCode.Keypad8,
+                            [PlayerAction.Down] = KeyCode.Keypad5,
+                            [PlayerAction.Action1] = KeyCode.Keypad7,
+                            [PlayerAction.Action2] = KeyCode.Keypad9
+                        }
+                    );
 
-                    return new IPlayerSetting[] { player1, player2 };
+                    ReadOnlySharedPlayerSetting player2 = new ReadOnlySharedPlayerSetting(
+                        1, "Leung", Color.red, 0, new Dictionary<PlayerAction, KeyCode>
+                        {
+                            [PlayerAction.Left] = KeyCode.LeftArrow,
+                            [PlayerAction.Right] = KeyCode.RightArrow,
+                            [PlayerAction.Up] = KeyCode.UpArrow,
+                            [PlayerAction.Down] = KeyCode.DownArrow,
+                            [PlayerAction.Action1] = KeyCode.RightAlt,
+                            [PlayerAction.Action2] = KeyCode.RightControl
+                        }
+                    );
+
+                    return new IReadOnlySharedPlayerSetting[] { player1, player2 };
                 }
                 else
                 {
-                    return PlayerSetting.players;
+                    return SharedData.playerSettings;
                 }
             }
         }
         protected abstract int passPoints { get; }
+
+        private void OnLastSceneStatePoped(SceneStateManager manager, ValueTuple<ISceneState, object> result)
+        {
+            SceneManager.LoadSceneAsync(SceneBuildIndex.setup);
+        }
     }
 }

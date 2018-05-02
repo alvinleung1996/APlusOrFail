@@ -111,7 +111,7 @@ namespace APlusOrFail.Character
             StartCoroutine(LateStart());
         }
 
-        IEnumerator LateStart()
+        private IEnumerator LateStart()
         {
             yield return new WaitForFixedUpdate();
             spriteAnimator = charSprite.attachedSprite?.GetComponent<Animator>();
@@ -279,7 +279,7 @@ namespace APlusOrFail.Character
 
         private bool HasKeyPressed(PlayerAction action)
         {
-            KeyCode code = charPlayer.player?.GetKeyForAction(action) ?? KeyCode.None;
+            KeyCode code = charPlayer.playerSetting?.GetKeyForAction(action) ?? KeyCode.None;
             return code != KeyCode.None && Input.GetKey(code);
         }
 

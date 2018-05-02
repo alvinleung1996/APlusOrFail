@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace APlusOrFail.MapSwitchCounter
 {
+    [System.Obsolete]
     public class MapSwitchCounterCanvas : MonoBehaviour
     {
         public class PendingSwitching

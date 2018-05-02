@@ -45,7 +45,7 @@ namespace APlusOrFail.Components
         {
             if (registeredInGrid)
             {
-                MapManager.mapStat?.mapArea?.RemoveFromGrid(gameObject);
+                MapArea.instance?.RemoveFromGrid(gameObject);
                 registeredInGrid = false;
             }
         }
@@ -67,17 +67,17 @@ namespace APlusOrFail.Components
                 {
                     if (registeredInGrid)
                     {
-                        MapManager.mapStat.mapArea.RemoveFromGrid(gameObject);
+                        MapArea.instance.RemoveFromGrid(gameObject);
                         registeredInGrid = false;
                     }
 
                     GetComponentsInChildren(true, objectGridRects);
                     if (registerInGrid)
                     {
-                        MapManager.mapStat.mapArea.AddToGrid(worldGridRects, gameObject);
+                        MapArea.instance.AddToGrid(worldGridRects, gameObject);
                         registeredInGrid = true;
                     }
-                    transform.position = MapManager.mapStat.mapArea.GridToWorldPosition(gridPosition);
+                    transform.position = MapArea.instance.GridToWorldPosition(gridPosition);
                     transform.rotation = Quaternion.Euler(0, 0, 90 * (byte)rotation);
                 }
             }
@@ -93,6 +93,6 @@ namespace APlusOrFail.Components
             }
         }
 
-        public bool IsRegisterable() => started && enabled && MapManager.mapStat.mapArea.IsPlaceable(worldGridRects);
+        public bool IsRegisterable() => started && enabled && MapArea.instance.IsPlaceable(worldGridRects);
     }
 }

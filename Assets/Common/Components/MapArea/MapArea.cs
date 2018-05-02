@@ -7,12 +7,11 @@ using UnityEngine;
 namespace APlusOrFail.Components
 {
     using Character;
-    using Maps;
 
     [DisallowMultipleComponent]
     [ExecuteInEditMode]
     [RequireComponent(typeof(BoxCollider2D))]
-    public class MapArea : MonoBehaviour
+    public class MapArea : SingletonBehavior<MapArea>
     {
         private class GridObject
         {
@@ -42,8 +41,9 @@ namespace APlusOrFail.Components
         private BoxCollider2D areaCollider;
 
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             if (Application.isPlaying)
             {
                 grid = new GridObject[gridSize.x, gridSize.y];

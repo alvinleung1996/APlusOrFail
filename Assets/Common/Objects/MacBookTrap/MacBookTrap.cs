@@ -21,7 +21,7 @@ namespace APlusOrFail.Objects
         private Coroutine runningCoroutine;
         private bool closingAnimationFinished = true;
 
-        IReadOnlyPlayerSetting IObjectPlayerSource.player { get; set; }
+        IReadOnlySharedPlayerSetting IObjectPlayerSource.player { get; set; }
 
 
         private void Awake()
@@ -69,19 +69,23 @@ namespace APlusOrFail.Objects
                         colliders = new Collider2D[colliders.Length * 2];
                     }
 
-                    IRoundPlayerStat roundPlayerStat = ((IObjectPlayerSource)this).player != null ?
-                        MapManager.mapStat.GetRoundPlayerStat(MapManager.mapStat.currentRound, ((IObjectPlayerSource)this).player) :
-                        null;
-                    for (int i = 0; i < colliderCount; ++i)
+                    if (MapManager.mapStat.currentRound >= 0 && MapManager.mapStat.currentRound < MapManager.mapStat.roundStats.Count
+                        && MapManager.mapStat.roundStats[MapManager.mapStat.currentRound].state == RoundState.Playing)
                     {
-                        CharacterControl charControl = colliders[i].gameObject.GetComponentInParent<CharacterControl>();
-                        if (!charControl.ended)
+                        IRoundPlayerStat roundPlayerStat = ((IObjectPlayerSource)this).player != null ?
+                            MapManager.mapStat.GetRoundPlayerStat(MapManager.mapStat.currentRound, ((IObjectPlayerSource)this).player) :
+                            null;
+                        for (int i = 0; i < colliderCount; ++i)
                         {
-                            int healthDelta = charControl.ChangeHealth(new ReadOnlyPlayerHealthChange(PlayerHealthChangeReason.ByTrap, -charControl.health, gameObject));
-                            if (healthDelta > 0 && roundPlayerStat != null)
+                            CharacterControl charControl = colliders[i].gameObject.GetComponentInParent<CharacterControl>();
+                            if (!charControl.ended)
                             {
-                                roundPlayerStat.scoreChanges.Add(MapManager.mapStat.roundSettings[MapManager.mapStat.currentRound]
-                                    .CreatePointsChange(PlayerPointsChangeReason.KillOtherByTrap, gameObject));
+                                int healthDelta = charControl.ChangeHealth(new ReadOnlyPlayerHealthChange(PlayerHealthChangeReason.ByTrap, -charControl.health, gameObject));
+                                if (healthDelta > 0 && roundPlayerStat != null)
+                                {
+                                    roundPlayerStat.scoreChanges.Add(MapManager.mapStat.roundSettings[MapManager.mapStat.currentRound]
+                                        .CreatePointsChange(PlayerPointsChangeReason.KillOtherByTrap, gameObject));
+                                }
                             }
                         }
                     }

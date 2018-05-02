@@ -5,15 +5,13 @@ namespace APlusOrFail.Character
     [RequireComponent(typeof(CharacterPlayer))]
     public class CharacterSprite : MonoBehaviour
     {
-        public GameObject overrideCharacterSprite;
-
         public GameObject attachedSprite { get; private set; }
         
         private void Start()
         {
-            CharacterPlayer charPlayer = GetComponent<CharacterPlayer>();
-            GameObject prefab = overrideCharacterSprite ?? charPlayer.player.characterSprite;
-            if (prefab != null)
+            int id = GetComponent<CharacterSpriteId>().spriteId;
+            GameObject prefab;
+            if (SharedData.CharacterSpriteIdMap.TryGetValue(id, out prefab))
             {
                 attachedSprite = Instantiate(prefab, transform);
             }

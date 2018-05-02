@@ -11,32 +11,17 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 1951835064020352}
   m_IsPrefabParent: 1
---- !u!1 &1482378978844286
+--- !u!1 &1764243213337100
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 5
   m_Component:
-  - component: {fileID: 4504064664754976}
-  - component: {fileID: 61010459002588280}
-  - component: {fileID: 114272417119514388}
-  m_Layer: 11
-  m_Name: Brick_Cell
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!1 &1764243213337100
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 5
-  m_Component:
   - component: {fileID: 4743875377045248}
   - component: {fileID: 212642606704665748}
+  - component: {fileID: 114827889132589546}
+  - component: {fileID: 61359672733045808}
   m_Layer: 11
   m_Name: Brick_CellImage
   m_TagString: Untagged
@@ -69,25 +54,11 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1951835064020352}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -24, y: -15, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children:
-  - {fileID: 4504064664754976}
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &4504064664754976
-Transform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1482378978844286}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -20, y: -9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4743875377045248}
-  m_Father: {fileID: 4069326762434768}
+  m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &4743875377045248
@@ -100,50 +71,34 @@ Transform:
   m_LocalPosition: {x: 0.5, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 4504064664754976}
+  m_Father: {fileID: 4069326762434768}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &61010459002588280
+--- !u!61 &61359672733045808
 BoxCollider2D:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1482378978844286}
+  m_GameObject: {fileID: 1764243213337100}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 6200000, guid: 3ab19c5446f778f4bad9d5c385f11a64, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.5, y: 0.5}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
+    border: {x: 0.0625, y: 0.0625, z: 0.0625, w: 0.0625}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
-    drawMode: 0
+    drawMode: 2
     adaptiveTiling: 0
-  m_AutoTiling: 0
+  m_AutoTiling: 1
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
---- !u!114 &114272417119514388
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1482378978844286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ebfcef155a8e32e4ead7b7783c602603, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _gridLocalRect:
-    x: 0
-    y: 0
-    width: 1
-    height: 1
 --- !u!114 &114497599240745526
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -162,7 +117,7 @@ MonoBehaviour:
   _width: 1
   _height: 1
   _color: {r: 0.39705884, g: 0.3240701, b: 0.17809257, a: 1}
-  brickRect: {fileID: 114272417119514388}
+  brickRect: {fileID: 114827889132589546}
   brickRenderer: {fileID: 212642606704665748}
 --- !u!114 &114819285321874754
 MonoBehaviour:
@@ -175,9 +130,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cfe3b30505929b47a180c7fc930356f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gridPosition: {x: 1, y: 0}
+  _gridPosition: {x: 0, y: 1}
   _rotation: 0
   _registerInGrid: 1
+--- !u!114 &114827889132589546
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1764243213337100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebfcef155a8e32e4ead7b7783c602603, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gridLocalRect:
+    x: 0
+    y: 0
+    width: 1
+    height: 1
 --- !u!114 &114878050422204268
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -229,7 +200,7 @@ SpriteRenderer:
   m_Color: {r: 0.39705884, g: 0.3240701, b: 0.17809257, a: 1}
   m_FlipX: 0
   m_FlipY: 0
-  m_DrawMode: 0
+  m_DrawMode: 2
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0

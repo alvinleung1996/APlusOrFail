@@ -3,33 +3,28 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-namespace APlusOrFail.Components.NameTag
+namespace APlusOrFail.Components
 {
-    using Character;
-
     [RequireComponent(typeof(RectTransform))]
     public class NameTag : MonoBehaviour
     {
-        [NonSerialized] public new Camera camera;
-        [NonSerialized] public RectTransform canvasRectTransform;
         private RectTransform rectTransform;
         public Text nameText;
         public Vector2 worldOffset = Vector2.zero;
 
-        private CharacterPlayer _charPlayer;
-        public CharacterPlayer charPlayer
+        public new Camera camera { get; set; }
+        public RectTransform canvasRectTransform { get; set; }
+        public Transform targetTransform { get; set; }
+
+        private IReadOnlySharedPlayerSetting _playerSetting;
+        public IReadOnlySharedPlayerSetting playerSetting { get { return _playerSetting; } set { SetProperty(ref _playerSetting, value); } }
+
+        private void SetProperty<T>(ref T property, T value)
         {
-            get
+            if (!Equals(property, value))
             {
-                return _charPlayer;
-            }
-            set
-            {
-                if (!ReferenceEquals(_charPlayer, value))
-                {
-                    _charPlayer = value;
-                    UpdateProperties();
-                }
+                property = value;
+                ApplyProperties();
             }
         }
 
@@ -37,22 +32,22 @@ namespace APlusOrFail.Components.NameTag
         private void Awake()
         {
             rectTransform = GetComponent<RectTransform>();
-            UpdateProperties();
+            ApplyProperties();
         }
 
-        private void UpdateProperties()
+        public void ApplyProperties()
         {
-            gameObject.SetActive(charPlayer != null);
-            if (charPlayer != null)
+            gameObject.SetActive(targetTransform != null);
+            if (targetTransform != null)
             {
-                nameText.text = charPlayer.player.name;
-                nameText.color = charPlayer.player.color;
+                nameText.text = playerSetting?.name ?? "";
+                nameText.color = playerSetting?.color ?? Color.white;
             }
         }
 
         public void LateUpdate()
         {
-            Vector2 screenPoint = camera.WorldToScreenPoint(charPlayer.transform.position + ((Vector3)worldOffset));
+            Vector2 screenPoint = camera.WorldToScreenPoint(targetTransform.transform.position + ((Vector3)worldOffset));
             Vector2 canvasPoint;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRectTransform, screenPoint, null, out canvasPoint);
             Rect rect = canvasRectTransform.rect;

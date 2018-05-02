@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace APlusOrFail.Maps.SceneStates
 {
+    using Components;
     using Character;
 
     public class ResultSceneState : SceneStateBehavior<IMapStat, Void>
@@ -14,6 +15,7 @@ namespace APlusOrFail.Maps.SceneStates
         public CharacterControl characterPrefab;
 
         private List<CharacterControl> attacedCharacters = new List<CharacterControl>();
+        private readonly List<IReadOnlySharedPlayerSetting> waitingPlayers = new List<IReadOnlySharedPlayerSetting>();
 
         private void Awake()
         {
@@ -33,17 +35,36 @@ namespace APlusOrFail.Maps.SceneStates
                         arg.roundSettings[arg.currentRound - 1].spawnArea.transform.position,
                         characterPrefab.transform.rotation
                     );
-                    CharacterPlayer charPlayer = charControl.GetComponent<CharacterPlayer>();
-
-                    charPlayer.player = ps;
-
                     attacedCharacters.Add(charControl);
-                    arg.camera.Trace(charControl.gameObject);
+
+                    charControl.GetComponent<CharacterSpriteId>().spriteId = ps.characterSpriteId;
+                    charControl.GetComponent<CharacterPlayer>().playerSetting = ps;
+                    AutoResizeCamera.instance.Trace(charControl.transform);
+                    waitingPlayers.Add(ps);
                 }
             }
             return Task.CompletedTask;
         }
 
+        private void Update()
+        {
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
+            {
+                for (int i = waitingPlayers.Count - 1; i >= 0; --i)
+                {
+                    bool ok = HasKeyUp(waitingPlayers[i], PlayerAction.Action1);
+                    if (ok)
+                    {
+                        waitingPlayers.RemoveAt(i);
+                    }
+                }
+
+                if (waitingPlayers.Count == 0)
+                {
+                    PopSceneState(null);
+                }
+            }
+        }
 
         protected override Task OnBlur()
         {
@@ -52,11 +73,17 @@ namespace APlusOrFail.Maps.SceneStates
             foreach (CharacterControl charControl in attacedCharacters)
             {
                 Destroy(charControl.gameObject);
-                arg.camera.Untrace(charControl.gameObject);
+                AutoResizeCamera.instance.Untrace(charControl.transform);
             }
             attacedCharacters.Clear();
 
             return Task.CompletedTask;
+        }
+
+        private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)
+        {
+            KeyCode code = player.GetKeyForAction(action);
+            return code != KeyCode.None && Input.GetKeyUp(code);
         }
     }
 }

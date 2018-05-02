@@ -32,7 +32,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 
         protected override Task OnLoad()
         {
-            backgroundCanvas.worldCamera = objectCanvas.worldCamera = arg.camera.GetComponent<Camera>();
+            backgroundCanvas.worldCamera = objectCanvas.worldCamera = AutoResizeCamera.instance.GetComponent<Camera>();
             backgroundCanvas.sortingLayerID = objectCanvas.sortingLayerID = SortingLayerId.UI;
             return Task.CompletedTask;
         }
@@ -81,17 +81,16 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
                 }
 
                 RectInt objLocalGridBound = prefabInfo.GetComponentsInChildren<MapGridRect>().GetLocalRects().GetOuterBound();
-                Vector2 center = ((Vector2)(objLocalGridBound.min + objLocalGridBound.max)) / 2;
 
                 float angle = Mathf.PI / 2 - angleInterval * i;
                 Vector2 position = new Vector2(radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
-                position += objectCanvasRectTransform.rect.center;
+                position += objectCanvasRectTransform.rect.center - Multiply(objLocalGridBound.center, gridUnitScale);
                 prefabInfo.transform.localPosition = position;
 
                 attachedPrefabInfos.Add(prefabInfo);
             }
 
-            foreach (IReadOnlyPlayerSetting player in arg.playerStats)
+            foreach (IReadOnlySharedPlayerSetting player in arg.playerStats)
             {
                 AddKeyCursor(player);
             }
@@ -115,7 +114,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             }
         }
 
-        private void AddKeyCursor(IReadOnlyPlayerSetting player)
+        private void AddKeyCursor(IReadOnlySharedPlayerSetting player)
         {
             KeyCursor keyCursor = Instantiate(keyCursorPrefab, foregroundCanvas.transform);
             keyCursor.player = player;
@@ -159,7 +158,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             }
         }
 
-        private bool HasKeyUp(IReadOnlyPlayerSetting player, PlayerAction action)
+        private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)
         {
             KeyCode code = player.GetKeyForAction(action);
             return code != KeyCode.None && Input.GetKeyUp(code);
@@ -169,6 +168,11 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             a.x * b.x,
             a.y * b.y,
             a.z * b.z
+        );
+
+        private Vector2 Multiply(Vector2 a, Vector2 b) => new Vector2(
+            a.x * b.x,
+            a.y * b.y
         );
 
     }

@@ -1,25 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
+namespace APlusOrFail.Setup.SceneStates
 {
-    using Character;
+    using Components;
 
-    public class PlayerNameAndColorSetupState : SceneStateBehavior<Void, Void>
+    public class PlayerNameAndColorSetupState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, ValueTuple<IPlayerSetting, bool>>
     {
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public InputField nameInputField;
         public List<ColorButton> colorButtons;
         public Button enterButton;
         public Button cancelButton;
-        
-        public GameObject character { get; set; }
-        public bool cancelled { get; private set; }
 
-        private IPlayerSetting player;
-        private Color color;
+        private string originalName;
+        private Color originalColor;
         
         private void Start()
         {
@@ -29,33 +27,24 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
             {
                 button.onSelected += OnColorButtonSelected;
             }
-            HideUI();
-        }
-
-        protected override Task OnLoad()
-        {
-            cancelled = false;
-            player = (IPlayerSetting)character.GetComponent<CharacterPlayer>().player;
-            color = player.color;
-            nameInputField.text = player.name;
-            return Task.CompletedTask;
+            uiScene.gameObject.SetActive(false);
         }
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            ShowUI();
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
+            originalName = arg.Item2.name;
+            originalColor = arg.Item2.color;
+            nameInputField.text = originalName;
+            nameInputField.Select();
             return Task.CompletedTask;
         }
 
         protected override Task OnBlur()
         {
-            HideUI();
-            return Task.CompletedTask;
-        }
-
-        protected override Task OnUnload()
-        {
-            player = null;
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
             return Task.CompletedTask;
         }
 
@@ -63,7 +52,7 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                color = button.color;
+                arg.Item2.color = button.color;
             }
         }
 
@@ -71,9 +60,9 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                player.name = nameInputField.text;
-                player.color = color;
-                SceneStateManager.instance.Pop(this, null);
+                arg.Item2.name = nameInputField.text;
+                arg.Item2.ApplyProperties();
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, true));
             }
         }
 
@@ -81,20 +70,11 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                cancelled = true;
-                SceneStateManager.instance.Pop(this, null);
+                arg.Item2.name = originalName;
+                arg.Item2.color = originalColor;
+                arg.Item2.ApplyProperties();
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, false));
             }
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
-        }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-            nameInputField.Select();
         }
     }
 }

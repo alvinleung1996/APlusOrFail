@@ -12,7 +12,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         public PlayerScores playerScores;
         public TooEasyNoPointBanner tooEasyBanner;
 
-        private readonly List<IReadOnlyPlayerSetting> waitingPlayers = new List<IReadOnlyPlayerSetting>();
+        private readonly List<IReadOnlySharedPlayerSetting> waitingPlayers = new List<IReadOnlySharedPlayerSetting>();
         
         private void Awake()
         {
@@ -69,7 +69,7 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             await tooEasyBanner.UpdateBanner(null);
         }
 
-        private bool HasKeyUp(IReadOnlyPlayerSetting player, PlayerAction action)
+        private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)
         {
             KeyCode code = player.GetKeyForAction(action);
             return code != KeyCode.None && Input.GetKeyUp(code);

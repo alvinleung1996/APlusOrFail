@@ -1,16 +1,18 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using UnityEngine.UI;
+using UnityEngine;
 
-namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
+namespace APlusOrFail.Setup.SceneStates
 {
-    using Character;
+    using Components;
 
-    public class PlayerActionKeySetupState : SceneStateBehavior<Void, Void>
+    public class PlayerActionKeySetupState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, ValueTuple<IPlayerSetting, bool>>
     {
-        private static readonly ReadOnlyCollection<PlayerAction> actionSequence = new ReadOnlyCollection<PlayerAction>(new PlayerAction[]{
+        private static readonly ReadOnlyCollection<PlayerAction> actionSequence = new ReadOnlyCollection<PlayerAction>(new PlayerAction[] {
             PlayerAction.Left,
             PlayerAction.Right,
             PlayerAction.Up,
@@ -34,114 +36,89 @@ namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
         }
 
 
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public Text enterKeyMessageText;
         public Button cancelButton;
 
-        public GameObject character { get; set; }
-        public bool cancelled { get; private set; }
+        private readonly Dictionary<PlayerAction, KeyCode> originalActionMap = new Dictionary<PlayerAction, KeyCode>();
+        private Coroutine runningCoroutine;
 
-        private CharacterPlayer charPlayer;
-        private Dictionary<PlayerAction, KeyCode> actionKeyMap;
-        private int setupingActionIndex = 0;
-
-
-        private void Start()
+        private void Awake()
         {
+            uiScene.gameObject.SetActive(false);
             cancelButton.onClick.AddListener(OnCancelButtonClicked);
-            HideUI();
-        }
-
-        protected override Task OnLoad()
-        {
-            charPlayer = character.GetComponent<CharacterPlayer>();
-            actionKeyMap = new Dictionary<PlayerAction, KeyCode>();
-            setupingActionIndex = 0;
-
-            cancelled = false;
-
-            return Task.CompletedTask;
         }
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            ShowUI();
-            enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[setupingActionIndex])}";
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
+            foreach (var pair in arg.Item2.actionMap) originalActionMap.Add(pair.Key, pair.Value);
+            runningCoroutine = StartCoroutine(RegisterKeyCoroutine());
             return Task.CompletedTask;
         }
 
         protected override Task OnBlur()
         {
-            HideUI();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
+            originalActionMap.Clear();
             return Task.CompletedTask;
         }
 
-        protected override Task OnUnload()
+        private IEnumerator RegisterKeyCoroutine()
         {
-            charPlayer = null;
-            actionKeyMap = null;
-            return Task.CompletedTask;
-        }
+            ISetupData setupData = arg.Item1;
+            IPlayerSetting playerSetting = arg.Item2;
+            
+            arg.Item1.UnmapAllActionFromKey(arg.Item2);
 
-        private void Update()
-        {
-            if (phase.IsAtLeast(SceneStatePhase.Focused))
+            for (int i = 0; i < actionSequence.Count; ++i)
             {
-                KeyCode? key = KeyDetector.GetKeyDowned();
-                if (key != null)
-                {
-                    OnKeyDown(key.Value);
-                }
-            }
-        }
+                enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[i])}";
 
-        private void OnKeyDown(KeyCode key)
-        {
-            if (PlayerInputRegistry.HasRegisteredByOther(key, charPlayer.player))
-            {
-                enterKeyMessageText.text = "The key has already used by other player!";
-            }
-            else if (actionKeyMap.ContainsValue(key))
-            {
-                enterKeyMessageText.text = "The key is used for other action!";
-            }
-            else
-            {
-                actionKeyMap[actionSequence[setupingActionIndex]] = key;
-                ++setupingActionIndex;
-                if (setupingActionIndex < actionSequence.Count)
+                KeyCode key;
+                while (true)
                 {
-                    enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[setupingActionIndex])}";
-                }
-                else
-                {
-                    ((IPlayerSetting)charPlayer.player).UnmapAllActionFromKey();
-                    foreach (KeyValuePair<PlayerAction, KeyCode> pair in actionKeyMap)
+                    yield return null;
+                    key = KeyDetector.GetKeyDowned();
+                    if (key != KeyCode.None)
                     {
-                        ((IPlayerSetting)charPlayer.player).MapActionToKey(pair.Key, pair.Value);
+                        IPlayerSetting registeredPlayerSetting;
+                        if (setupData.keyPlayerMap.TryGetValue(key, out registeredPlayerSetting))
+                        {
+                            if (registeredPlayerSetting == playerSetting)
+                            {
+                                enterKeyMessageText.text = "The key is used for other action!";
+                            }
+                            else
+                            {
+                                enterKeyMessageText.text = "The key has already used by other player!";
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    SceneStateManager.instance.Pop(this, null);
                 }
+
+                setupData.MapActionToKey(playerSetting, actionSequence[i], key);
             }
+
+            PopSceneState(new ValueTuple<IPlayerSetting, bool>(playerSetting, true));
         }
 
         private void OnCancelButtonClicked()
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.Pop(this, null);
-                cancelled = true;
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, false));
+                arg.Item1.UnmapAllActionFromKey(arg.Item2);
+                foreach (var pair in originalActionMap) arg.Item1.MapActionToKey(arg.Item2, pair.Key, pair.Value);
+                StopCoroutine(runningCoroutine);
+                runningCoroutine = null;
             }
-        }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
         }
     }
 }

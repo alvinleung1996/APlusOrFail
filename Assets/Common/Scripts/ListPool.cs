@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Assets.Common.Scripts
+namespace APlusOrFail
 {
     public static class ListPool<T>
     {
@@ -25,6 +25,7 @@ namespace Assets.Common.Scripts
             if (pool.Count < 10)
             {
                 pool.Add(list);
+                list.Clear();
             }
         }
     }

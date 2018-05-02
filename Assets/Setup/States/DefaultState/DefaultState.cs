@@ -1,82 +1,232 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.DefaultSceneState
+namespace APlusOrFail.Setup.SceneStates
 {
+    using Components;
     using Character;
-    using CharacterOptionState;
-    using PlayerNameAndColorSetupState;
-    using PlayerActionKeySetupState;
 
-    public class DefaultState : SceneStateBehavior<Void, Void>
+    public class DefaultState : SceneStateBehavior<ISetupData, int>, IMapSelectionRegistry
     {
+        private class MapSelectionHandler : IMapSelectionHandler
+        {
+            public int sceneIndex { get; set; }
+            public int priority { get; set; }
+
+            public MapSelectionHandler(int sceneIndex, int priority)
+            {
+                this.sceneIndex = sceneIndex;
+                this.priority = priority;
+            }
+        }
+
+
+        public Canvas canvas;
+        public NameTag nameTagPrefab;
+        public RectTransform counterPanel;
+        public Text counterText;
+
         public PlayerNameAndColorSetupState inputPlayerNameUIScene;
         public PlayerActionKeySetupState actionKeySetupUIScene;
         public CharacterOptionsState charOptionUIScene;
 
-        private PlayerNameAndColorSetupState activeNameColorSetupScene;
-        private PlayerActionKeySetupState activeKeySetupScene;
+        public float countDownTime = 5;
 
-        private void Start()
+        private readonly List<MapSelectionHandler> selectionHandlers = new List<MapSelectionHandler>();
+        private MapSelectionHandler selectedHandler;
+        private float remainingTime;
+
+
+        private void Awake()
         {
-            foreach (Selectable selectable in FindObjectsOfType(typeof(Selectable)))
+            if (!this.Register())
             {
-                selectable.OnSelected += OnCharacterSelected;
+                Destroy(this);
+                return;
             }
+            canvas.gameObject.SetActive(false);
+            counterPanel.gameObject.SetActive(false);
+            RecomputeSelectedHandlers();
+        }
+
+        private void OnDestroy()
+        {
+            this.Unregister();
+        }
+
+        protected override Task OnLoad()
+        {
+            foreach (Transform selectable in arg.characterPlayerSettingMap.Keys)
+            {
+                selectable.GetComponent<Selectable>().onSelected += OnCharacterSelected;
+            }
+            canvas.gameObject.SetActive(true);
+            return Task.CompletedTask;
         }
 
         private void OnCharacterSelected(Selectable selectedChar)
         {
             if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                CharacterPlayer charPlayer = selectedChar.GetComponent<CharacterPlayer>();
-                if (charPlayer.player == null)
+                IPlayerSetting playerSetting;
+                if ((playerSetting = arg.characterPlayerSettingMap[selectedChar.transform]) != null)
                 {
-                    charPlayer.player = new PlayerSetting()
-                    {
-                        characterSprite = selectedChar.GetComponent<CharacterSprite>().overrideCharacterSprite
-                    };
-                    SceneStateManager.instance.Push(inputPlayerNameUIScene, null);
-                    activeNameColorSetupScene = inputPlayerNameUIScene;
-                    activeNameColorSetupScene.character = selectedChar.gameObject;
+                    PushSceneState(charOptionUIScene, new ValueTuple<ISetupData, IPlayerSetting>(arg, playerSetting));
                 }
                 else
                 {
-                    SceneStateManager.instance.Push(charOptionUIScene, null);
-                    charOptionUIScene.character = selectedChar.gameObject;
+                    playerSetting = new PlayerSetting(
+                        selectedChar.GetComponent<CharacterSpriteId>().spriteId,
+                        selectedChar.transform,
+                        canvas.GetComponent<RectTransform>(), nameTagPrefab
+                    );
+                    arg.characterPlayerSettingMap[selectedChar.transform] = playerSetting;
+                    selectedChar.GetComponent<CharacterPlayer>().playerSetting = playerSetting;
+                    PushSceneState(inputPlayerNameUIScene, new ValueTuple<ISetupData, IPlayerSetting>(arg, playerSetting));
                 }
             }
         }
 
         protected override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            if (activeNameColorSetupScene != null)
+            foreach (Transform character in arg.characterPlayerSettingMap.Keys)
             {
-                if (activeNameColorSetupScene.cancelled)
+                AutoResizeCamera.instance.Trace(character);
+            }
+
+            RecomputeSelectedHandlers();
+
+            Type unloadedType = unloadedSceneState?.GetType();
+            if (unloadedType == typeof(PlayerNameAndColorSetupState))
+            {
+                ValueTuple<IPlayerSetting, bool> r = (ValueTuple<IPlayerSetting, bool>)result;
+                IPlayerSetting playerSetting = r.Item1;
+                bool success = r.Item2;
+                
+                if (success)
                 {
-                    CharacterPlayer charPlayer = activeNameColorSetupScene.character.GetComponent<CharacterPlayer>();
-                    //TODO: delete player;
-                    charPlayer.player = null;
+                    PushSceneState(actionKeySetupUIScene, new ValueTuple<ISetupData, IPlayerSetting>(arg, playerSetting));
                 }
                 else
                 {
-                    SceneStateManager.instance.Push(actionKeySetupUIScene, null);
-                    activeKeySetupScene = actionKeySetupUIScene;
-                    activeKeySetupScene.character = activeNameColorSetupScene.character;
+                    playerSetting.character.GetComponent<CharacterPlayer>().playerSetting = null;
+                    playerSetting.Free();
+                    arg.characterPlayerSettingMap[playerSetting.character.transform] = null;
+                    arg.UnmapAllActionFromKey(playerSetting);
                 }
-                activeNameColorSetupScene = null;
             }
-            else if (activeKeySetupScene != null)
+            else if (unloadedType == typeof(PlayerActionKeySetupState))
             {
-                if (activeKeySetupScene.cancelled)
+                ValueTuple<IPlayerSetting, bool> r = (ValueTuple<IPlayerSetting, bool>)result;
+                IPlayerSetting playerSetting = r.Item1;
+                bool success = r.Item2;
+                
+                if (!success)
                 {
-                    CharacterPlayer charPlayer = activeKeySetupScene.character.GetComponent<CharacterPlayer>();
-                    // TODO: delete player
-                    charPlayer.player = null;
+                    playerSetting.character.GetComponent<CharacterPlayer>().playerSetting = null;
+                    playerSetting.Free();
+                    arg.characterPlayerSettingMap[playerSetting.character.transform] = null;
+                    arg.UnmapAllActionFromKey(playerSetting);
                 }
-                activeKeySetupScene = null;
             }
             return Task.CompletedTask;
         }
 
+        private void Update()
+        {
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
+            {
+                if (selectedHandler != null)
+                {
+                    remainingTime -= Time.deltaTime;
+                    if (remainingTime > 0)
+                    {
+                        counterText.text = $"{Mathf.CeilToInt(remainingTime)}";
+                    }
+                    else
+                    {
+                        PopSceneState(selectedHandler.sceneIndex);
+                        selectedHandler = null;
+                        selectionHandlers.Clear();
+                    }
+                }
+            }
+        }
+
+        protected override Task OnBlur()
+        {
+            AutoResizeCamera.instance.UntraceAll();
+            RecomputeSelectedHandlers(false);
+            return Task.CompletedTask;
+        }
+
+        protected override Task OnUnload()
+        {
+            canvas.gameObject.SetActive(false);
+            foreach (Transform selectable in arg.characterPlayerSettingMap.Keys)
+            {
+                selectable.GetComponent<Selectable>().onSelected -= OnCharacterSelected;
+            }
+            return Task.CompletedTask;
+        }
+
+
+        public IMapSelectionHandler Schedule(int sceneIndex, int priority)
+        {
+            MapSelectionHandler handler = new MapSelectionHandler(sceneIndex, priority);
+            selectionHandlers.Add(handler);
+            RecomputeSelectedHandlers();
+            return handler;
+        }
+
+        public void UpdateSchedule(IMapSelectionHandler handler, int sceneIndex, int priority)
+        {
+            MapSelectionHandler h = handler as MapSelectionHandler;
+            if (h != null && selectionHandlers.Contains(h) && (h.sceneIndex != sceneIndex || h.priority != priority))
+            {
+                h.sceneIndex = sceneIndex;
+                h.priority = priority;
+                RecomputeSelectedHandlers();
+            }
+        }
+
+        public void Unschedule(IMapSelectionHandler handler)
+        {
+            MapSelectionHandler h = handler as MapSelectionHandler;
+            if (h != null && selectionHandlers.Remove(h))
+            {
+                RecomputeSelectedHandlers();
+            }
+        }
+
+        private void RecomputeSelectedHandlers(bool enable = true)
+        {
+            MapSelectionHandler nextHandler = null;
+            if (enable && phase.IsAtLeast(SceneStatePhase.Focused))
+            {
+                foreach (MapSelectionHandler handler in selectionHandlers)
+                {
+                    if (nextHandler == null || nextHandler.priority < handler.priority)
+                    {
+                        nextHandler = handler;
+                    }
+                    else if (nextHandler != null && nextHandler.priority == handler.priority)
+                    {
+                        nextHandler = null;
+                        break;
+                    }
+                }
+            }
+            if (nextHandler != selectedHandler)
+            {
+                counterPanel.gameObject.SetActive(nextHandler != null);
+                selectedHandler = nextHandler;
+                remainingTime = countDownTime;
+            }
+        }
     }
 }

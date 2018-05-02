@@ -10,8 +10,8 @@ namespace APlusOrFail.Maps.SceneStates
         public RectTransform nameBackground;
         public Text nameText;
 
-        private IReadOnlyPlayerSetting _player;
-        public IReadOnlyPlayerSetting player {
+        private IReadOnlySharedPlayerSetting _player;
+        public IReadOnlySharedPlayerSetting player {
             get
             {
                 return _player;
@@ -84,7 +84,7 @@ namespace APlusOrFail.Maps.SceneStates
             }
         }
 
-        protected bool HasKeyPressed(IReadOnlyPlayerSetting player, PlayerAction action)
+        protected bool HasKeyPressed(IReadOnlySharedPlayerSetting player, PlayerAction action)
         {
             KeyCode key = player.GetKeyForAction(action);
             return key != KeyCode.None && Input.GetKey(key);

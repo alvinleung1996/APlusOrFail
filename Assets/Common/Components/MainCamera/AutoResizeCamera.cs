@@ -7,7 +7,7 @@ namespace APlusOrFail.Components
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Camera))]
     [ExecuteInEditMode]
-    public class AutoResizeCamera : MonoBehaviour
+    public class AutoResizeCamera : SingletonBehavior<AutoResizeCamera>
     {
         [SerializeField] private Rect _defaultInnerArea;
         public Rect defaultInnerArea { get { return _defaultInnerArea; } set { SetProperty(ref _defaultInnerArea, value); } }
@@ -41,20 +41,21 @@ namespace APlusOrFail.Components
             }
         }
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             camera = GetComponent<Camera>();
         }
 
 
-        public void Trace(GameObject gameObject, Rect bound = new Rect())
+        public void Trace(Transform gameObject, Rect bound = new Rect())
         {
-            charTransforms.Add(gameObject.transform, bound);
+            charTransforms.Add(gameObject, bound);
         }
 
-        public void Untrace(GameObject gameObject)
+        public void Untrace(Transform gameObject)
         {
-            charTransforms.Remove(gameObject.transform);
+            charTransforms.Remove(gameObject);
         }
 
         public void UntraceAll()

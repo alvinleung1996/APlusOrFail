@@ -7,7 +7,6 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 {
     using Character;
     using Components;
-    using Components.NameTag;
 
     public class RoundSceneState : SceneStateBehavior<IMapStat, Void>
     {
@@ -32,16 +31,18 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     .Rotate(spawnArea.rotation)
                     .Move(spawnArea.gridPosition)
                     .GetInnerBound();
-                Vector2 spawnPoint = MapManager.mapStat.mapArea.LocalToWorldPosition(bound.center);
+                Vector2 spawnPoint = MapArea.instance.LocalToWorldPosition(bound.center);
 
                 int i = 0;
-                foreach (IReadOnlyPlayerSetting player in arg.playerStats)
+                foreach (IReadOnlySharedPlayerSetting player in arg.playerStats)
                 {
                     CharacterControl charControl = Instantiate(characterPrefab, spawnPoint, characterPrefab.transform.rotation);
+                    CharacterSpriteId charId = charControl.GetComponent<CharacterSpriteId>();
                     CharacterPlayer charPlayer = charControl.GetComponent<CharacterPlayer>();
 
+                    charId.spriteId = player.characterSpriteId;
+                    charPlayer.playerSetting = player;
                     charControl.onEndedChanged += OnCharEnded;
-                    charPlayer.player = player;
 
                     if (charControl.ended)
                     {
@@ -57,7 +58,7 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     if (i >= nameTags.Count)
                     {
                         nameTag = Instantiate(nameTagPrefab, canvasRectTransform);
-                        nameTag.camera = arg.camera.GetComponent<Camera>();
+                        nameTag.camera = AutoResizeCamera.instance.GetComponent<Camera>();
                         nameTag.canvasRectTransform = canvasRectTransform;
                         nameTags.Add(nameTag);
                     }
@@ -65,17 +66,17 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     {
                         nameTag = nameTags[i];
                     }
-                    nameTag.charPlayer = charPlayer;
+                    nameTag.targetTransform = charPlayer.transform;
 
 
-                    arg.camera.Trace(charControl.gameObject);
+                    AutoResizeCamera.instance.Trace(charControl.transform);
 
 
                     ++i;
                 }
                 for (int j = i; j < nameTags.Count; ++j)
                 {
-                    nameTags[j].charPlayer = null;
+                    nameTags[j].targetTransform = null;
                 }
 
                 if (notEndedCharControls.Count == 0)
@@ -102,10 +103,10 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 
             foreach (NameTag nameTag in nameTags)
             {
-                nameTag.charPlayer = null;
+                nameTag.targetTransform = null;
             }
 
-            arg.camera.UntraceAll();
+            AutoResizeCamera.instance.UntraceAll();
 
             return Task.CompletedTask;
         }
@@ -116,13 +117,13 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
             {
                 endedCharControls.Add(charControl);
                 notEndedCharControls.Remove(charControl);
-                arg.camera.Untrace(charControl.gameObject);
+                AutoResizeCamera.instance.Untrace(charControl.transform);
             }
             else
             {
                 endedCharControls.Remove(charControl);
                 notEndedCharControls.Add(charControl);
-                arg.camera.Trace(charControl.gameObject);
+                AutoResizeCamera.instance.Trace(charControl.transform);
             }
 
             if (notEndedCharControls.Count == 0)
@@ -140,11 +141,11 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
         {
             IRoundStat roundStat = arg.roundStats[arg.currentRound];
 
-            roundStat.tooEasyNoPoint = charControls.All(cc => cc.won);
+            roundStat.tooEasyNoPoint = charControls.Count() > 1 && charControls.All(cc => cc.won);
 
             foreach (CharacterControl charControl in charControls)
             {
-                IReadOnlyPlayerSetting player = charControl.GetComponent<CharacterPlayer>().player;
+                IReadOnlySharedPlayerSetting player = charControl.GetComponent<CharacterPlayer>().playerSetting;
                 IRoundPlayerStat roundPlayerStat = arg.roundPlayerStats[arg.currentRound, arg.playerStats.FindIndex(ps => ps == player)];
 
                 if (!roundStat.tooEasyNoPoint && charControl.won)

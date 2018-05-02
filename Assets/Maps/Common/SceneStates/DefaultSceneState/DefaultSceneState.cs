@@ -110,7 +110,7 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
 
         private void OnResultFinished()
         {
-            SceneManager.LoadSceneAsync(SceneBuildIndex.setup);
+            PopSceneState(null);
         }
     }
 }
