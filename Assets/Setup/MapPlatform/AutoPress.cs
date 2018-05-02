@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace APlusOrFail.Setup
 {
     using Character;
-
+    
     public class AutoPress : MonoBehaviour
     {
         public SpringJoint2D springJoint;

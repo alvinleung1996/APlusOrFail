@@ -22,7 +22,7 @@ namespace APlusOrFail.Maps
         };
 
         protected override int minRoundCount => 3;
-        protected override int passPoints => 10;
+        protected override int passPoints => 150;
 
     }
 }
