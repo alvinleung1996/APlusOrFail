@@ -77,8 +77,8 @@ namespace APlusOrFail.Components
                         MapArea.instance.AddToGrid(worldGridRects, gameObject);
                         registeredInGrid = true;
                     }
-                    transform.position = MapArea.instance.GridToWorldPosition(gridPosition);
-                    transform.rotation = Quaternion.Euler(0, 0, 90 * (byte)rotation);
+                    transform.localPosition = MapArea.instance.GridToLocalPosition(gridPosition);
+                    transform.localRotation = Quaternion.Euler(0, 0, 90 * (byte)rotation);
                 }
             }
             else
@@ -87,8 +87,8 @@ namespace APlusOrFail.Components
                 if (objectGrid != null)
                 {
                     GetComponentsInChildren(true, objectGridRects);
-                    transform.position = objectGrid.GridToWorldPosition(gridPosition);
-                    transform.rotation = Quaternion.Euler(0, 0, 90 * (byte)rotation);
+                    transform.localPosition = objectGrid.GridToLocalPosition(gridPosition);
+                    transform.localRotation = Quaternion.Euler(0, 0, 90 * (byte)rotation);
                 }
             }
         }

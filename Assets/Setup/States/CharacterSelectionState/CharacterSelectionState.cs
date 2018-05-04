@@ -23,39 +23,43 @@ namespace APlusOrFail.Setup.SceneStates
             cancelButton.onClick.AddListener(OnCancelButtonClicked);
             uiScene.gameObject.SetActive(false);
         }
-
-        protected override Task OnLoad()
+        
+        public override Task OnLoad(SceneStateManager sceneStateManager, ValueTuple<ISetupData, IPlayerSetting> arg)
         {
+            Task task = base.OnLoad(sceneStateManager, arg);
             foreach (Transform selectable in arg.Item1.characterPlayerSettingMap.Keys)
             {
                 selectable.GetComponent<Selectable>().onSelected += OnCharactedSelected;
             }
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             uiScene.gameObject.SetActive(true);
             foreach (Transform character in arg.Item1.characterPlayerSettingMap.Keys) AutoResizeCamera.instance.Trace(character);
             originalCharacter = arg.Item2.character;
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             uiScene.gameObject.SetActive(false);
             AutoResizeCamera.instance.UntraceAll();
             originalCharacter = null;
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnUnload()
+        public override Task OnUnload()
         {
+            Task task = base.OnUnload();
             foreach (Transform selectable in arg.Item1.characterPlayerSettingMap.Keys)
             {
                 selectable.GetComponent<Selectable>().onSelected -= OnCharactedSelected;
             }
-            return Task.CompletedTask;
+            return task;
         }
 
         private void OnCancelButtonClicked()

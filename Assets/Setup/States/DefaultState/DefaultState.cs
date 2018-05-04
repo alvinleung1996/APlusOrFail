@@ -57,15 +57,16 @@ namespace APlusOrFail.Setup.SceneStates
         {
             this.Unregister();
         }
-
-        protected override Task OnLoad()
+        
+        public override Task OnLoad(SceneStateManager sceneStateManager, ISetupData arg)
         {
+            Task task = base.OnLoad(sceneStateManager, arg);
             foreach (Transform selectable in arg.characterPlayerSettingMap.Keys)
             {
                 selectable.GetComponent<Selectable>().onSelected += OnCharacterSelected;
             }
             canvas.gameObject.SetActive(true);
-            return Task.CompletedTask;
+            return task;
         }
 
         private void OnCharacterSelected(Selectable selectedChar)
@@ -91,8 +92,9 @@ namespace APlusOrFail.Setup.SceneStates
             }
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             foreach (Transform character in arg.characterPlayerSettingMap.Keys)
             {
                 AutoResizeCamera.instance.Trace(character);
@@ -133,7 +135,7 @@ namespace APlusOrFail.Setup.SceneStates
                     arg.UnmapAllActionFromKey(playerSetting);
                 }
             }
-            return Task.CompletedTask;
+            return task;
         }
 
         private void Update()
@@ -157,21 +159,23 @@ namespace APlusOrFail.Setup.SceneStates
             }
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             AutoResizeCamera.instance.UntraceAll();
             RecomputeSelectedHandlers(false);
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnUnload()
+        public override Task OnUnload()
         {
+            Task task = base.OnUnload();
             canvas.gameObject.SetActive(false);
             foreach (Transform selectable in arg.characterPlayerSettingMap.Keys)
             {
                 selectable.GetComponent<Selectable>().onSelected -= OnCharacterSelected;
             }
-            return Task.CompletedTask;
+            return task;
         }
 
 

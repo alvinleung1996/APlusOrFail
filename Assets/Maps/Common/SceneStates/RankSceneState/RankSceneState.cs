@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace APlusOrFail.Maps.SceneStates.RankSceneState
 {
-    public class RankSceneState : SceneStateBehavior<IMapStat, Void>
+    public class RankSceneState : ObservableSceneStateBehavior<IMapStat, Void, IRankSceneState>, IRankSceneState
     {
         public Canvas canvas;
         public Regions regions;
@@ -13,24 +13,32 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
         public TooEasyNoPointBanner tooEasyBanner;
 
         private readonly List<IReadOnlySharedPlayerSetting> waitingPlayers = new List<IReadOnlySharedPlayerSetting>();
-        
-        private void Awake()
+        protected override IRankSceneState observable => this;
+        private bool poped;
+
+        protected override void Awake()
         {
+            base.Awake();
             canvas.gameObject.SetActive(false);
         }
-
-        protected override async Task OnFocus(ISceneState unloadedSceneState, object result)
+        
+        public override async Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
+            poped = false;
             if (unloadedSceneState == null)
             {
                 waitingPlayers.AddRange(arg.playerStats);
                 await ShowUI();
             }
+            await task;
         }
-
-        protected override async Task OnBlur()
+        
+        public override async Task OnBlur()
         {
+            Task task = base.OnBlur();
             await HideUI();
+            await task;
         }
 
         private void Update()
@@ -46,9 +54,10 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
                     }
                 }
 
-                if (waitingPlayers.Count == 0)
+                if (!poped && waitingPlayers.Count == 0)
                 { 
                     PopSceneState(null);
+                    poped = true;
                 }
             }
         }

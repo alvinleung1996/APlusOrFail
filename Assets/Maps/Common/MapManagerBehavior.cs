@@ -41,16 +41,18 @@ namespace APlusOrFail.Maps
         {
             public string name { get; }
             public int points { get; }
+            public float timeLimit { get; }
             public MapGridPlacer spawnArea { get; }
             public IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
             public IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap { get; }
             public IReadOnlyDictionary<PlayerPointsChangeReason, Color> rankColorMap { get; }
 
-            public RoundSetting(string name, int points, MapGridPlacer spawnArea, IEnumerable<ObjectPrefabInfo> usableObjects,
+            public RoundSetting(string name, int points, float timeLimit, MapGridPlacer spawnArea, IEnumerable<ObjectPrefabInfo> usableObjects,
                 IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap, IReadOnlyDictionary<PlayerPointsChangeReason, Color> rankColorMap)
             {
                 this.name = name;
                 this.points = points;
+                this.timeLimit = timeLimit;
                 this.spawnArea = spawnArea;
                 this.usableObjects = new ReadOnlyCollection<ObjectPrefabInfo>(usableObjects.ToList());
                 this.pointsMap = pointsMap.ToDictionary(p => p.Key, p => p.Value);

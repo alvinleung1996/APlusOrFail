@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -8,19 +9,23 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
     using Character;
     using Components;
 
-    public class RoundSceneState : SceneStateBehavior<IMapStat, Void>
+    public class RoundSceneState : ObservableSceneStateBehavior<IMapStat, Void, IPlaySceneState>, IPlaySceneState
     {
         public CharacterControl characterPrefab;
         public RectTransform canvasRectTransform;
         public NameTag nameTagPrefab;
-        
+
+        protected override IPlaySceneState observable => this;
         private readonly HashSet<CharacterControl> notEndedCharControls = new HashSet<CharacterControl>();
         private readonly HashSet<CharacterControl> endedCharControls = new HashSet<CharacterControl>();
         private readonly List<NameTag> nameTags = new List<NameTag>();
+        private Coroutine timerCoroutine;
 
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
+
             if (unloadedSceneState == null)
             {
                 canvasRectTransform.gameObject.SetActive(true);
@@ -85,11 +90,21 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
                     OnAllCharacterEnded();
                 }
             }
-            return Task.CompletedTask;
+
+            timerCoroutine = StartCoroutine(TimerCoroutine());
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
+
+            if (timerCoroutine != null)
+            {
+                StopCoroutine(timerCoroutine);
+                timerCoroutine = null;
+            }
+
             canvasRectTransform.gameObject.SetActive(false);
 
             IEnumerable<CharacterControl> charControls = notEndedCharControls.Concat(endedCharControls);
@@ -109,7 +124,22 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 
             AutoResizeCamera.instance.UntraceAll();
 
-            return Task.CompletedTask;
+            return task;
+        }
+
+        private readonly List<CharacterControl> tempControls = new List<CharacterControl>();
+        private IEnumerator TimerCoroutine()
+        {
+            yield return new WaitForSeconds(arg.roundSettings[arg.currentRound].timeLimit);
+            timerCoroutine = null;
+
+            tempControls.AddRange(notEndedCharControls);
+            foreach (CharacterControl charPlayer in tempControls)
+            {
+                charPlayer.ChangeHealth(new ReadOnlyPlayerHealthChange(PlayerHealthChangeReason.Timeout, -charPlayer.health, null));
+            }
+
+            tempControls.Clear();
         }
 
         private void OnCharEnded(CharacterControl charControl, bool ended)
@@ -135,6 +165,11 @@ namespace APlusOrFail.Maps.SceneStates.RoundSceneState
 
         private void OnAllCharacterEnded()
         {
+            if (timerCoroutine != null)
+            {
+                StopCoroutine(timerCoroutine);
+                timerCoroutine = null;
+            }
             SceneStateManager.instance.Pop(this, null);
         }
 

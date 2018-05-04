@@ -4,12 +4,35 @@ using UnityEngine;
 
 namespace APlusOrFail.Objects
 {
+    using System.Threading.Tasks;
     using Character;
     using Maps;
 
     public class MacBookTrap : MonoBehaviour, IObjectPlayerSource
     {
         private static int animatorCloseHash = Animator.StringToHash("close");
+
+        private class PlaySceneStateObserver : SceneStateLifecycleObserver<IPlaySceneState>
+        {
+            private readonly MacBookTrap outer;
+
+            public PlaySceneStateObserver(MacBookTrap outer)
+            {
+                this.outer = outer;
+            }
+
+            public override Task OnSceneStateFocus(IPlaySceneState sceneState)
+            {
+                outer.isPlaying = true;
+                return Task.CompletedTask;
+            }
+
+            public override Task OnSceneStateBlur(IPlaySceneState sceneState)
+            {
+                outer.isPlaying = false;
+                return Task.CompletedTask;
+            }
+        }
 
 
         public BoxCollider2D screenTrigger;
@@ -18,6 +41,8 @@ namespace APlusOrFail.Objects
         public Color damgerousColor = Color.red;
         public float waitingTime = 2;
 
+        private PlaySceneStateObserver playSceneStateObserver;
+        private bool isPlaying;
         private Coroutine runningCoroutine;
         private bool closingAnimationFinished = true;
 
@@ -27,6 +52,18 @@ namespace APlusOrFail.Objects
         private void Awake()
         {
             animator = GetComponent<Animator>();
+        }
+
+        private void Start()
+        {
+            playSceneStateObserver = new PlaySceneStateObserver(this);
+            ObservableSceneState<IPlaySceneState>.Observe(playSceneStateObserver);
+        }
+
+        private void OnDestroy()
+        {
+            ObservableSceneState<IPlaySceneState>.Unobserve(playSceneStateObserver);
+            playSceneStateObserver = null;
         }
 
         private void OnEnable()
@@ -59,19 +96,18 @@ namespace APlusOrFail.Objects
 
                     yield return new WaitUntil(() => closingAnimationFinished);
 
-                    int colliderCount;
-                    while ((colliderCount = Physics2D.OverlapCollider(screenTrigger, new ContactFilter2D
+                    if (isPlaying)
                     {
-                        useLayerMask = true,
-                        layerMask = 1 << LayerId.Characters
-                    }, colliders)) == colliders.Length)
-                    {
-                        colliders = new Collider2D[colliders.Length * 2];
-                    }
-
-                    if (MapManager.mapStat.currentRound >= 0 && MapManager.mapStat.currentRound < MapManager.mapStat.roundStats.Count
-                        && MapManager.mapStat.roundStats[MapManager.mapStat.currentRound].state == RoundState.Playing)
-                    {
+                        int colliderCount;
+                        while ((colliderCount = Physics2D.OverlapCollider(screenTrigger, new ContactFilter2D
+                        {
+                            useLayerMask = true,
+                            layerMask = 1 << LayerId.Characters
+                        }, colliders)) == colliders.Length)
+                        {
+                            colliders = new Collider2D[colliders.Length * 2];
+                        }
+                        
                         IRoundPlayerStat roundPlayerStat = ((IObjectPlayerSource)this).player != null ?
                             MapManager.mapStat.GetRoundPlayerStat(MapManager.mapStat.currentRound, ((IObjectPlayerSource)this).player) :
                             null;

@@ -8,6 +8,10 @@ namespace APlusOrFail
 
         public static List<T> Get()
         {
+            //if (System.Threading.Thread.CurrentThread.ManagedThreadId != 1)
+            //{
+            //    UnityEngine.Debug.LogErrorFormat($"on another thread! {System.Threading.Thread.CurrentThread.ManagedThreadId}");
+            //}
             if (pool.Count > 0)
             {
                 List<T> list = pool[pool.Count - 1];
@@ -24,8 +28,8 @@ namespace APlusOrFail
         {
             if (pool.Count < 10)
             {
-                pool.Add(list);
                 list.Clear();
+                pool.Add(list);
             }
         }
     }

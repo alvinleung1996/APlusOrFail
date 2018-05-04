@@ -23,6 +23,7 @@ namespace APlusOrFail
     {
         string name { get; }
         int points { get; }
+        float timeLimit { get; }
         MapGridPlacer spawnArea { get; }
         IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
         IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap { get; }

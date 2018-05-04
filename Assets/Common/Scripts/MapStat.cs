@@ -78,6 +78,7 @@ namespace APlusOrFail
     {
         public string name { get; }
         public int points { get; }
+        public float timeLimit { get; }
         public MapGridPlacer spawnArea { get; }
         public IReadOnlyList<ObjectPrefabInfo> usableObjects { get; }
         public IReadOnlyDictionary<PlayerPointsChangeReason, int> pointsMap { get; }
@@ -89,6 +90,7 @@ namespace APlusOrFail
         {
             name = roundSetting.name;
             points = roundSetting.points;
+            timeLimit = roundSetting.timeLimit;
             spawnArea = roundSetting.spawnArea;
             usableObjects = new List<ObjectPrefabInfo>(roundSetting.usableObjects);
             pointsMap = roundSetting.pointsMap.ToDictionary(p => p.Key, p => p.Value);

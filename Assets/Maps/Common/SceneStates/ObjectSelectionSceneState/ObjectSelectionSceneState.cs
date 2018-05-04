@@ -10,7 +10,7 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
     using Components;
     using Objects;
     
-    public class ObjectSelectionSceneState : SceneStateBehavior<IMapStat, Void>
+    public class ObjectSelectionSceneState : ObservableSceneStateBehavior<IMapStat, Void, ISelectSceneState>, ISelectSceneState
     {
         private new Camera camera;
         public Canvas backgroundCanvas;
@@ -22,7 +22,8 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 
         private readonly List<ObjectPrefabInfo> attachedPrefabInfos = new List<ObjectPrefabInfo>();
         private readonly List<KeyCursor> keyCursors = new List<KeyCursor>();
-        
+        protected override ISelectSceneState observable => this;
+
 
         private void Start()
         {
@@ -30,26 +31,29 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             HideUI();
         }
 
-        protected override Task OnLoad()
+        public override Task OnLoad(SceneStateManager sceneStateManager, IMapStat arg)
         {
+            Task task = base.OnLoad(sceneStateManager, arg);
             backgroundCanvas.worldCamera = objectCanvas.worldCamera = AutoResizeCamera.instance.GetComponent<Camera>();
             backgroundCanvas.sortingLayerID = objectCanvas.sortingLayerID = SortingLayerId.UI;
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             if (unloadedSceneState == null)
             {
                 ShowUI();
             }
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             HideUI();
-            return Task.CompletedTask;
+            return task;
         }
 
         private List<SpriteRenderer> objSpriteRenderers = new List<SpriteRenderer>();

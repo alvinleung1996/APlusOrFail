@@ -7,13 +7,14 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 {
     using Objects;
     
-    public class PlaceObjectSceneState : SceneStateBehavior<IMapStat, Void>
+    public class PlaceObjectSceneState : ObservableSceneStateBehavior<IMapStat, Void, IPlaceObjectSceneState>, IPlaceObjectSceneState
     {
         private new Camera camera;
         public RectTransform uiScene;
         public ObjectCursor cursorPrefab;
 
         private readonly List<ObjectCursor> objectCursors = new List<ObjectCursor>();
+        protected override IPlaceObjectSceneState observable => this;
 
 
         private void Start()
@@ -22,16 +23,18 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             HideUI();
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             ShowUI();
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             HideUI();
-            return Task.CompletedTask;
+            return task;
         }
 
         private void ShowUI()

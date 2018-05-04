@@ -77,7 +77,17 @@ namespace APlusOrFail
         {
             if (pendingAction != Action.None && !asyncUpdating)
             {
-                UpdateAsync().ContinueWith(t => Debug.LogException(t.Exception), TaskContinuationOptions.OnlyOnFaulted);
+                new Func<Task>(async () =>
+                {
+                    try
+                    {
+                        await UpdateAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+                })();
             }
         }
 
@@ -104,15 +114,38 @@ namespace APlusOrFail
                     newSceneState = pendingSceneState;
                     sceneStateStack.Push(newSceneState);
 
-                    await WhenTwo(
-                        newSceneState.Load(this, pendingArg),
-                        NonNullTask(oldSceneState?.Blur())
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => newSceneState.OnPreLoad(this, pendingArg),
+                            () => newSceneState.OnLoad(this, pendingArg),
+                            () => newSceneState.OnPostLoad(this, pendingArg)
+                        ),
+                        ExecuteSequentially(
+                            () => NonNullTask(oldSceneState?.OnPreBlur()),
+                            () => NonNullTask(oldSceneState?.OnBlur()),
+                            () => NonNullTask(oldSceneState?.OnPostBlur())
+                        )
                     );
-                    await WhenTwo(
-                        newSceneState.MakeVisible(null, null),
-                        NonNullTask(oldSceneState?.MakeInvisible())
+
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => newSceneState.OnPreMakeVisible(null, null),
+                            () => newSceneState.OnMakeVisible(null, null),
+                            () => newSceneState.OnPostMakeVisible(null, null)
+                        ),
+                        ExecuteSequentially(
+                            () => NonNullTask(oldSceneState?.OnPreMakeInvisible()),
+                            () => NonNullTask(oldSceneState?.OnMakeInvisible()),
+                            () => NonNullTask(oldSceneState?.OnPostMakeInvisible())
+                        )
                     );
-                    await newSceneState.Focus(null, null);
+
+                    await ExecuteSequentially(
+                        () => newSceneState.OnPreFocus(null, null),
+                        () => newSceneState.OnFocus(null, null),
+                        () => newSceneState.OnPostFocus(null, null)
+                    );
+
                     break;
 
                 case Action.Replace:
@@ -120,32 +153,81 @@ namespace APlusOrFail
                     newSceneState = pendingSceneState;
                     sceneStateStack.Push(newSceneState);
 
-                    await WhenTwo(
-                        newSceneState.Load(this, pendingArg),
-                        oldSceneState.Blur()
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => newSceneState.OnPreLoad(this, pendingArg),
+                            () => newSceneState.OnLoad(this, pendingArg),
+                            () => newSceneState.OnPostLoad(this, pendingArg)
+                        ),
+                        ExecuteSequentially(
+                            () => oldSceneState.OnPreBlur(),
+                            () => oldSceneState.OnBlur(),
+                            () => oldSceneState.OnPostBlur()
+                        )
                     );
-                    await WhenTwo(
-                        newSceneState.MakeVisible(null, null),
-                        oldSceneState.MakeInvisible()
+
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => newSceneState.OnPreMakeVisible(null, null),
+                            () => newSceneState.OnMakeVisible(null, null),
+                            () => newSceneState.OnPostMakeVisible(null, null)
+                        ),
+                        ExecuteSequentially(
+                            () => oldSceneState.OnPreMakeInvisible(),
+                            () => oldSceneState.OnMakeInvisible(),
+                            () => oldSceneState.OnPostMakeInvisible()
+                        )
                     );
-                    await WhenTwo(
-                        newSceneState.Focus(null, null),
-                        oldSceneState.Unload()
+
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => newSceneState.OnPreFocus(null, null),
+                            () => newSceneState.OnFocus(null, null),
+                            () => newSceneState.OnPostFocus(null, null)
+                        ),
+                        ExecuteSequentially(
+                            () => oldSceneState.OnPreUnload(),
+                            () => oldSceneState.OnUnload(),
+                            () => oldSceneState.OnPostUnload()
+                        )
                     );
+
                     break;
 
                 case Action.Pop:
                     oldSceneState = sceneStateStack.Pop();
                     newSceneState = sceneStateStack.Count > 0 ? sceneStateStack.Peek() : null;
-                    
-                    await oldSceneState.Blur();
-                    await WhenTwo(
-                        NonNullTask(newSceneState?.MakeVisible(oldSceneState, pendingResult)),
-                        oldSceneState.MakeInvisible()
+
+                    await ExecuteSequentially(
+                        () => oldSceneState.OnPreBlur(),
+                        () => oldSceneState.OnBlur(),
+                        () => oldSceneState.OnPostBlur()
                     );
-                    await WhenTwo(
-                        NonNullTask(newSceneState?.Focus(oldSceneState, pendingResult)),
-                        oldSceneState.Unload()
+
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => NonNullTask(newSceneState?.OnPreMakeVisible(oldSceneState, pendingResult)),
+                            () => NonNullTask(newSceneState?.OnMakeVisible(oldSceneState, pendingResult)),
+                            () => NonNullTask(newSceneState?.OnPostMakeVisible(oldSceneState, pendingResult))
+                        ),
+                        ExecuteSequentially(
+                            () => oldSceneState.OnPreMakeInvisible(),
+                            () => oldSceneState.OnMakeInvisible(),
+                            () => oldSceneState.OnPostMakeInvisible()
+                        )
+                    );
+
+                    await WhenAll(
+                        ExecuteSequentially(
+                            () => NonNullTask(newSceneState?.OnPreFocus(oldSceneState, pendingResult)),
+                            () => NonNullTask(newSceneState?.OnFocus(oldSceneState, pendingResult)),
+                            () => NonNullTask(newSceneState?.OnPostFocus(oldSceneState, pendingResult))
+                        ),
+                        ExecuteSequentially(
+                            () => oldSceneState.OnPreUnload(),
+                            () => oldSceneState.OnUnload(),
+                            () => oldSceneState.OnPostUnload()
+                        )
                     );
 
                     if (newSceneState == null)
@@ -199,13 +281,18 @@ namespace APlusOrFail
         }
 
         private Task NonNullTask(Task task) => task ?? Task.CompletedTask;
-
-        private readonly Task[] _tasks = new Task[2];
-        private Task WhenTwo(Task task1, Task task2)
+        
+        private async Task WhenAll(Task task1, Task task2)
         {
-            _tasks[0] = task1;
-            _tasks[1] = task2;
-            return Task.WhenAll(_tasks);
+            await task1;
+            await task2;
+        }
+
+        private async Task ExecuteSequentially(Func<Task> taskFn1, Func<Task> taskFn2, Func<Task> taskFn3)
+        {
+            await taskFn1();
+            await taskFn2();
+            await taskFn3();
         }
     }
 }

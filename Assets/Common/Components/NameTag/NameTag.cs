@@ -47,12 +47,15 @@ namespace APlusOrFail.Components
 
         private void Update()
         {
-            Vector2 screenPoint = camera.WorldToScreenPoint(targetTransform.transform.position + ((Vector3)worldOffset));
-            Vector2 canvasPoint;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRectTransform, screenPoint, null, out canvasPoint);
             Rect rect = canvasRectTransform.rect;
-            Vector2 anchorMinAndMax = new Vector2(canvasPoint.x / rect.width + 0.5f, canvasPoint.y / rect.height + 0.5f);
-            rectTransform.anchorMin = rectTransform.anchorMax = anchorMinAndMax;
+            if (rect.width > 0 && rect.height > 0)
+            {
+                Vector2 screenPoint = camera.WorldToScreenPoint(targetTransform.transform.position + ((Vector3)worldOffset));
+                Vector2 canvasPoint;
+                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRectTransform, screenPoint, null, out canvasPoint);
+                Vector2 anchorMinAndMax = new Vector2(canvasPoint.x / rect.width + 0.5f, canvasPoint.y / rect.height + 0.5f);
+                rectTransform.anchorMin = rectTransform.anchorMax = anchorMinAndMax;
+            }
         }
     }
 }

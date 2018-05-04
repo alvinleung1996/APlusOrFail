@@ -107,7 +107,8 @@ namespace APlusOrFail
     {
         No,
         ByTrap,
-        ExitArea
+        ExitArea,
+        Timeout
     }
 
     public enum PlayerPointsChangeReason

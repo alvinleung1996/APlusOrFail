@@ -9,7 +9,7 @@ namespace APlusOrFail.Maps.SceneStates
     using Components;
     using Character;
 
-    public class ResultSceneState : SceneStateBehavior<IMapStat, Void>
+    public class ResultSceneState : ObservableSceneStateBehavior<IMapStat, Void, IResultSceneState>, IResultSceneState
     {
         public Canvas canvas;
         public CharacterControl characterPrefab;
@@ -17,14 +17,21 @@ namespace APlusOrFail.Maps.SceneStates
 
         private readonly List<ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>> waitingPlayers
             = new List<ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>>();
+        protected override IResultSceneState observable => this;
+        private bool poped;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             canvas.gameObject.SetActive(false);
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
+
+            poped = false;
+
             if (unloadedSceneState == null)
             {
                 canvas.gameObject.SetActive(true);
@@ -54,7 +61,7 @@ namespace APlusOrFail.Maps.SceneStates
                     waitingPlayers.Add(new ValueTuple<IReadOnlySharedPlayerSetting, CharacterControl, NameTag>(ps, charControl, nameTag));
                 }
             }
-            return Task.CompletedTask;
+            return task;
         }
 
         private void Update()
@@ -75,15 +82,17 @@ namespace APlusOrFail.Maps.SceneStates
                     }
                 }
 
-                if (waitingPlayers.Count == 0)
+                if (!poped && waitingPlayers.Count == 0)
                 {
                     PopSceneState(null);
+                    poped = true;
                 }
             }
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             canvas.gameObject.SetActive(false);
 
             AutoResizeCamera.instance.UntraceAll();
@@ -94,7 +103,7 @@ namespace APlusOrFail.Maps.SceneStates
             }
             waitingPlayers.Clear();
 
-            return Task.CompletedTask;
+            return task;
         }
 
         private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)

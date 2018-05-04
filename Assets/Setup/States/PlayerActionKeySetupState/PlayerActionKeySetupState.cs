@@ -49,21 +49,23 @@ namespace APlusOrFail.Setup.SceneStates
             cancelButton.onClick.AddListener(OnCancelButtonClicked);
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             uiScene.gameObject.SetActive(true);
             AutoResizeCamera.instance.Trace(arg.Item2.character);
             foreach (var pair in arg.Item2.actionMap) originalActionMap.Add(pair.Key, pair.Value);
             runningCoroutine = StartCoroutine(RegisterKeyCoroutine());
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             uiScene.gameObject.SetActive(false);
             AutoResizeCamera.instance.UntraceAll();
             originalActionMap.Clear();
-            return Task.CompletedTask;
+            return task;
         }
 
         private IEnumerator RegisterKeyCoroutine()

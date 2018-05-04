@@ -31,18 +31,20 @@ namespace APlusOrFail.Setup.SceneStates
             uiScene.gameObject.SetActive(false);
         }
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             uiScene.gameObject.SetActive(true);
             AutoResizeCamera.instance.Trace(arg.Item2.character);
-            return Task.CompletedTask;
+            return task;
         }
 
-        protected override Task OnBlur()
+        public override Task OnBlur()
         {
+            Task task = base.OnBlur();
             uiScene.gameObject.SetActive(false);
             AutoResizeCamera.instance.UntraceAll();
-            return Task.CompletedTask;
+            return task;
         }
 
         private void OnChangeNameColorButtonClicked()

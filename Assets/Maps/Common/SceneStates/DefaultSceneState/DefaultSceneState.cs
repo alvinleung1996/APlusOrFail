@@ -11,17 +11,19 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
     using RoundSceneState;
     using RankSceneState;
 
-    public class DefaultSceneState : SceneStateBehavior<IMapStat, Void>
+    public class DefaultSceneState : ObservableSceneStateBehavior<IMapStat, Void, IDefaultSceneState>, IDefaultSceneState
     {
         public ObjectSelectionSceneState objectSelectionUIScene;
         public PlaceObjectSceneState placeObjectUIScene;
         public RoundSceneState roundUIScene;
         public RankSceneState rankSceneState;
         public ResultSceneState resultSceneState;
-        
 
-        protected override Task OnFocus(ISceneState unloadedSceneState, object result)
+        protected override IDefaultSceneState observable => this;
+
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
+            Task task = base.OnFocus(unloadedSceneState, result);
             Type unloadedType = unloadedSceneState?.GetType();
             if (unloadedSceneState == null)
             {
@@ -47,7 +49,7 @@ namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
             {
                 OnResultFinished();
             }
-            return Task.CompletedTask;
+            return task;
         }
 
         private void OnMapStart()
