@@ -4,7 +4,7 @@ namespace APlusOrFail.Objects
 {
     public class ObjectPrefabLink : MonoBehaviour
     {
-        public GameObject prefab;
+        public ObjectPrefabInfo prefab;
 
         private void Start()
         {

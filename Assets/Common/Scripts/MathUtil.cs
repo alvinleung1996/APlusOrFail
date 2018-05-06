@@ -30,9 +30,19 @@ namespace APlusOrFail
             return new Vector2(vector.y, -vector.x);
         }
 
+        public static Vector2Int Rotate90DegCW(this Vector2Int vector)
+        {
+            return new Vector2Int(vector.y, -vector.x);
+        }
+
         public static Vector2 Rotate90DegCCW(this Vector2 vector)
         {
             return new Vector2(-vector.y, vector.x);
+        }
+
+        public static Vector2Int Rotate90DegCCW(this Vector2Int vector)
+        {
+            return new Vector2Int(-vector.y, vector.x);
         }
     }
 }

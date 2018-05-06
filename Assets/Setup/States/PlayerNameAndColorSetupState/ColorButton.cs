@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
+namespace APlusOrFail.Setup.SceneStates
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(Image))]

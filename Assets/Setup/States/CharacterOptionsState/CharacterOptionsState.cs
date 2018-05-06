@@ -1,16 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.CharacterOptionState
+namespace APlusOrFail.Setup.SceneStates
 {
     using Character;
-    using PlayerNameAndColorSetupState;
-    using CharacterSelectionState;
-    using PlayerActionKeySetupState;
+    using Components;
 
-    public class CharacterOptionsState : SceneState
+    public class CharacterOptionsState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, Void>
     {
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public Button changeNameColorButton;
         public Button chooseCharacterButton;
         public Button remapActionKeyButton;
@@ -21,95 +21,74 @@ namespace APlusOrFail.Setup.States.CharacterOptionState
         public CharacterSelectionState charSelectionUIScene;
         public PlayerActionKeySetupState actionKeySetupUIScene;
 
-        public GameObject character { get; set; }
-
-        private CharacterSelectionState activeCharSelectionUIScene;
-
-        private void Start()
+        private void Awake()
         {
             changeNameColorButton.onClick.AddListener(OnChangeNameColorButtonClicked);
             chooseCharacterButton.onClick.AddListener(OnChooseCharacterButtonClicked);
             remapActionKeyButton.onClick.AddListener(OnRemapActionKeyButtonClicked);
             closeButton.onClick.AddListener(OnCloseButtonClicked);
             deletePlayerButton.onClick.AddListener(OnDeletePlayerButtonClicked);
-
-            HideUI();
+            uiScene.gameObject.SetActive(false);
         }
 
-        protected override void OnActivate()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            ShowUI();
-            if (activeCharSelectionUIScene != null)
-            {
-                if (activeCharSelectionUIScene.selectedCharacter != character)
-                {
-                    character = activeCharSelectionUIScene.selectedCharacter;
-                }
-                activeCharSelectionUIScene = null;
-            }
+            Task task = base.OnFocus(unloadedSceneState, result);
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
+            return task;
         }
 
-        protected override void OnDeactivate()
+        public override Task OnBlur()
         {
-            HideUI();
+            Task task = base.OnBlur();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
+            return task;
         }
 
         private void OnChangeNameColorButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.PushSceneState(nameColorSetupUIScene);
-                nameColorSetupUIScene.character = character;
+                PushSceneState(nameColorSetupUIScene, arg);
             }
         }
 
         private void OnChooseCharacterButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.PushSceneState(charSelectionUIScene);
-                activeCharSelectionUIScene = charSelectionUIScene;
-                activeCharSelectionUIScene.originalCharacter = character;
+                PushSceneState(charSelectionUIScene, arg);
             }
         }
 
         private void OnRemapActionKeyButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.PushSceneState(actionKeySetupUIScene);
-                actionKeySetupUIScene.character = character;
+                PushSceneState(actionKeySetupUIScene, arg);
             }
         }
 
         private void OnCloseButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.PopSceneState();
+                PopSceneState(null);
             }
         }
 
         private void OnDeletePlayerButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                CharacterPlayer charPlayer = character.GetComponent<CharacterPlayer>();
-                charPlayer.player.Delete();
-                charPlayer.player = null;
-                SceneStateManager.instance.PopSceneState();
+                arg.Item2.character.GetComponent<CharacterPlayer>().playerSetting = null;
+                arg.Item2.Free();
+                arg.Item1.characterPlayerSettingMap[arg.Item2.character] = null;
+                arg.Item1.UnmapAllActionFromKey(arg.Item2);
+                PopSceneState(null);
             }
         }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
-        }
-
     }
 }

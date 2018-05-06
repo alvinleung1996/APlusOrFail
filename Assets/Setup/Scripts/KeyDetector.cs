@@ -19,12 +19,11 @@ namespace APlusOrFail
         }
 
 
-        public static KeyCode? GetKeyDowned()
+        public static KeyCode GetKeyDowned()
         {
             return keys
                 .SkipWhile(code => !Input.GetKeyDown(code))
-                .Select(code => (KeyCode?)code)
-                .DefaultIfEmpty(null)
+                .DefaultIfEmpty(KeyCode.None)
                 .First();
         }
     }

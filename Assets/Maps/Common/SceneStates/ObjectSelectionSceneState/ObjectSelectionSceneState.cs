@@ -1,90 +1,100 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 {
-    using KeyCursorController;
+    using Components;
     using Objects;
     
-    [RequireComponent(typeof(KeyCursorController))]
-    public class ObjectSelectionSceneState : SceneState
+    public class ObjectSelectionSceneState : ObservableSceneStateBehavior<IMapStat, Void, ISelectSceneState>, ISelectSceneState
     {
-        private static int objectLayerIndex = -1;
+        private new Camera camera;
+        public Canvas backgroundCanvas;
+        public Canvas objectCanvas;
+        public Canvas foregroundCanvas;
+        public KeyCursor keyCursorPrefab;
+        public Vector2 gridUnitScale = new Vector2(200, 200);
+        public float radius = 300;
 
-        public RectTransform uiScene;
-        public List<GameObject> objectPrefabs;
+        private readonly List<ObjectPrefabInfo> attachedPrefabInfos = new List<ObjectPrefabInfo>();
+        private readonly List<KeyCursor> keyCursors = new List<KeyCursor>();
+        protected override ISelectSceneState observable => this;
 
-        public readonly ReadOnlyDictionary<Player, GameObject> selectedObjects;
-
-        private KeyCursorController keyCursorController;
-
-        private readonly List<GameObject> attachedObjects = new List<GameObject>();
-        private readonly List<KeyCursorController.KeyCursor> keyCursors = new List<KeyCursorController.KeyCursor>();
-        private KeyCursorController.KeyCursor[] keyCursorsForUpdate;
-        private bool keyCursorsModified;
-        private readonly Dictionary<Player, GameObject> selectedObjectsInternal = new Dictionary<Player, GameObject>();
-
-        public ObjectSelectionSceneState()
-        {
-            selectedObjects = new ReadOnlyDictionary<Player, GameObject>(selectedObjectsInternal);
-        }
-
-        private void Awake()
-        {
-            if (objectLayerIndex < 0)
-            {
-                objectLayerIndex = LayerMask.NameToLayer("Selectable Objects");
-                if (objectLayerIndex < 0)
-                {
-                    Debug.LogErrorFormat("Cannot find layer \"Selectable Objects\"");
-                }
-            }
-        }
 
         private void Start()
         {
-            keyCursorController = GetComponent<KeyCursorController>();
+            camera = Camera.main;
             HideUI();
         }
 
-        protected override void OnActivate()
+        public override Task OnLoad(SceneStateManager sceneStateManager, IMapStat arg)
         {
-            base.OnActivate();
-            ShowUI();
+            Task task = base.OnLoad(sceneStateManager, arg);
+            backgroundCanvas.worldCamera = objectCanvas.worldCamera = AutoResizeCamera.instance.GetComponent<Camera>();
+            backgroundCanvas.sortingLayerID = objectCanvas.sortingLayerID = SortingLayerId.UI;
+            return task;
         }
 
-        protected override void OnDeactivate()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            base.OnDeactivate();
+            Task task = base.OnFocus(unloadedSceneState, result);
+            if (unloadedSceneState == null)
+            {
+                ShowUI();
+            }
+            return task;
+        }
+
+        public override Task OnBlur()
+        {
+            Task task = base.OnBlur();
             HideUI();
+            return task;
         }
 
+        private List<SpriteRenderer> objSpriteRenderers = new List<SpriteRenderer>();
         private void ShowUI()
         {
-            uiScene.gameObject.SetActive(true);
+            backgroundCanvas.gameObject.SetActive(true);
+            objectCanvas.gameObject.SetActive(true);
+            foregroundCanvas.gameObject.SetActive(true);
 
-            float angleInterval = 2 * Mathf.PI / objectPrefabs.Count;
-            for (int i = 0; i < objectPrefabs.Count; ++i)
+            RectTransform objectCanvasRectTransform = objectCanvas.GetComponent<RectTransform>();
+            IReadOnlyList<ObjectPrefabInfo> usableObjects = arg.roundSettings[arg.currentRound].usableObjects;
+
+            float angleInterval = 2 * Mathf.PI / usableObjects.Count;
+            for (int i = 0; i < usableObjects.Count; ++i)
             {
-                GameObject obj = Instantiate(objectPrefabs[i], transform);
-                attachedObjects.Add(obj);
-
-                obj.layer = objectLayerIndex;
-
                 // https://answers.unity.com/questions/1007585/reading-and-setting-asn-objects-global-scale-with.html
 
-                obj.transform.localScale = Vector3.one;
-                Vector3 scale = new Vector3(1 / obj.transform.lossyScale.x, 1 / obj.transform.lossyScale.y, 1 / obj.transform.lossyScale.z);
+                ObjectPrefabInfo prefabInfo = Instantiate(usableObjects[i], objectCanvas.transform);
+                prefabInfo.transform.localScale = Multiply(prefabInfo.transform.localScale, new Vector3(gridUnitScale.x, gridUnitScale.y, 1));
 
-                obj.transform.localScale = scale;
+                prefabInfo.GetComponent<MapGridPlacer>().enabled = false;
+                prefabInfo.gameObject.SetLayerRecursively(LayerId.SelectableObjects);
+
+                prefabInfo.GetComponentsInChildren(objSpriteRenderers);
+                foreach (SpriteRenderer sr in objSpriteRenderers)
+                {
+                    sr.sortingLayerID = SortingLayerId.UI;
+                    sr.sortingOrder = 1;
+                }
+
+                RectInt objLocalGridBound = prefabInfo.GetComponentsInChildren<MapGridRect>().GetLocalRects().GetOuterBound();
 
                 float angle = Mathf.PI / 2 - angleInterval * i;
-                Vector2 locationPosition = new Vector2(2 * Mathf.Cos(angle) * scale.x, 2 * Mathf.Sin(angle) * scale.y);
-                obj.transform.localPosition = locationPosition;
+                Vector2 position = new Vector2(radius * Mathf.Cos(angle), radius * Mathf.Sin(angle));
+                position += objectCanvasRectTransform.rect.center - Multiply(objLocalGridBound.center, gridUnitScale);
+                prefabInfo.transform.localPosition = position;
+
+                attachedPrefabInfos.Add(prefabInfo);
             }
 
-            foreach (Player player in Player.players)
+            foreach (IReadOnlySharedPlayerSetting player in arg.playerStats)
             {
                 AddKeyCursor(player);
             }
@@ -92,64 +102,58 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
 
         private void HideUI()
         {
-            uiScene.gameObject.SetActive(false);
+            backgroundCanvas.gameObject.SetActive(false);
+            objectCanvas.gameObject.SetActive(false);
+            foregroundCanvas.gameObject.SetActive(false);
 
-            foreach (GameObject attachedObject in attachedObjects)
+            foreach (ObjectPrefabInfo attachedPrefabInfo in attachedPrefabInfos)
             {
-                Destroy(attachedObject);
+                Destroy(attachedPrefabInfo.gameObject);
             }
-            attachedObjects.Clear();
+            attachedPrefabInfos.Clear();
 
-            foreach (KeyCursorController.KeyCursor keyCursor in keyCursors)
+            for (int i = keyCursors.Count - 1; i >= 0; --i)
             {
-                keyCursor.Remove();
-                keyCursorsModified = true;
+                RemoveKeyCursor(keyCursors[i]);
             }
-            if (keyCursorsModified) keyCursors.Clear();
         }
 
-        private void AddKeyCursor(Player player)
+        private void AddKeyCursor(IReadOnlySharedPlayerSetting player)
         {
-            KeyCursorController.KeyCursor keyCursor = keyCursorController.AddKeyCursor(player);
+            KeyCursor keyCursor = Instantiate(keyCursorPrefab, foregroundCanvas.transform);
+            keyCursor.player = player;
             keyCursors.Add(keyCursor);
-            keyCursorsModified = true;
         }
 
-        private void RemoveKeyCursor(KeyCursorController.KeyCursor keyCursor)
+        private void RemoveKeyCursor(KeyCursor keyCursor)
         {
-            if (keyCursors.Remove(keyCursor))
-            {
-                keyCursor.Remove();
-                keyCursorsModified = true;
-            }
+            keyCursors.Remove(keyCursor);
+            Destroy(keyCursor.gameObject);
         }
 
         private void Update()
         {
-            if (keyCursorsModified)
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                keyCursorsForUpdate = keyCursors.Count > 0 ? keyCursors.ToArray() : null;
-                keyCursorsModified = false;
-            }
-            if (state.IsAtLeast(State.Activated) && keyCursorsForUpdate != null)
-            {
-                foreach (KeyCursorController.KeyCursor keyCursor in keyCursorsForUpdate)
+                for (int i = keyCursors.Count - 1; i >= 0; --i)
                 {
-                    if (HasKeyUp(keyCursor.player, Player.Action.Select))
+                    KeyCursor keyCursor = keyCursors[i];
+                    if (HasKeyUp(keyCursor.player, PlayerAction.Action1))
                     {
-                        GameObject selectedObject = Physics2D.OverlapPoint(keyCursor.location, 1 << objectLayerIndex)?.gameObject;
-                        if (selectedObject != null)
+                        ObjectPrefabInfo prefabInfo = Physics2D.OverlapPoint(camera.ViewportToWorldPoint(keyCursor.viewportLocation), 1 << LayerId.SelectableObjects)?.gameObject.GetComponentInParent<ObjectPrefabInfo>();
+                        if (prefabInfo != null)
                         {
-                            selectedObjectsInternal.Add(keyCursor.player, selectedObject.GetComponent<ObjectPrefabInfo>().prefabLink.prefab);
+                            arg.roundPlayerStats[arg.currentRound, arg.playerStats.FindIndex(ps => ps ==  keyCursor.player)]
+                                .selectedObjectPrefab = prefabInfo.prefab;
 
                             RemoveKeyCursor(keyCursor);
 
-                            Destroy(selectedObject);
-                            attachedObjects.Remove(selectedObject);
+                            Destroy(prefabInfo.gameObject);
+                            attachedPrefabInfos.Remove(prefabInfo);
 
-                            if (keyCursors.Count == 0 || attachedObjects.Count == 0)
+                            if (keyCursors.Count == 0 || attachedPrefabInfos.Count == 0)
                             {
-                                SceneStateManager.instance.PopSceneState();
+                                SceneStateManager.instance.Pop(this, null);
                             }
                         }
                     }
@@ -158,11 +162,22 @@ namespace APlusOrFail.Maps.SceneStates.ObjectSelectionSceneState
             }
         }
 
-        private bool HasKeyUp(Player player, Player.Action action)
+        private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)
         {
-            KeyCode? code = player.GetKeyForAction(action);
-            return code != null && Input.GetKeyUp(code.Value);
+            KeyCode code = player.GetKeyForAction(action);
+            return code != KeyCode.None && Input.GetKeyUp(code);
         }
+
+        private Vector3 Multiply(Vector3 a, Vector3 b) => new Vector3(
+            a.x * b.x,
+            a.y * b.y,
+            a.z * b.z
+        );
+
+        private Vector2 Multiply(Vector2 a, Vector2 b) => new Vector2(
+            a.x * b.x,
+            a.y * b.y
+        );
 
     }
 }

@@ -55,10 +55,9 @@ GameObject:
   - component: {fileID: 95126009247568200}
   - component: {fileID: 114961909299456810}
   - component: {fileID: 114297271354540238}
-  - component: {fileID: 114284362472598944}
   - component: {fileID: 114985746334063676}
-  - component: {fileID: 114965143464425046}
   - component: {fileID: 114808958964086966}
+  - component: {fileID: 114197810055730406}
   m_Layer: 10
   m_Name: Character
   m_TagString: Character
@@ -148,7 +147,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1838405542405372}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4571092198906202}
@@ -302,7 +301,7 @@ Animator:
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
---- !u!114 &114284362472598944
+--- !u!114 &114197810055730406
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -310,9 +309,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1838405542405372}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15945ff5fad9709418905f35fe6051ae, type: 3}
+  m_Script: {fileID: 11500000, guid: bca261b9884119a4e805aaaf1661e94e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spriteId: 0
 --- !u!114 &114297271354540238
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -324,8 +324,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 881321c0aa5774f4f82dd6a65df419cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  overrideCharacterSprite: {fileID: 1894850082577556, guid: 675eefa0f9051194e9dc2adc5761e32d,
-    type: 2}
 --- !u!114 &114808958964086966
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -348,18 +346,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 110e03fb21d5bd94384cae7b28225c95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &114965143464425046
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1838405542405372}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29b9ebbc82194eb43952f595e7426cf8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _health: 16
 --- !u!114 &114985746334063676
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -373,9 +359,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSpeed: 2
   squatMaxSpeed: 3
-  flappingForce: 3
-  jumpingForce: 400
-  minJumpInterval: 0.1
+  initialHealth: 10
   wheelJoint: {fileID: 233385898197507310}
   wheelCollider: {fileID: 58814143607895474}
 --- !u!233 &233385898197507310

@@ -17,8 +17,8 @@ TagManager:
   - 
   - 
   - Characters
-  - 
-  - 
+  - Objects
+  - Decroations
   - 
   - 
   - 
@@ -44,6 +44,12 @@ TagManager:
     locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Decroations
+    uniqueID: 1045654369
+    locked: 0
+  - name: Objects
+    uniqueID: 426872997
     locked: 0
   - name: Characters
     uniqueID: 3480966955

@@ -1,104 +1,118 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 namespace APlusOrFail.Maps.SceneStates.DefaultSceneState
 {
     using ObjectSelectionSceneState;
     using PlaceObjectSceneState;
     using RoundSceneState;
+    using RankSceneState;
 
-    public class DefaultSceneState : SceneState
+    public class DefaultSceneState : ObservableSceneStateBehavior<IMapStat, Void, IDefaultSceneState>, IDefaultSceneState
     {
-        
-
         public ObjectSelectionSceneState objectSelectionUIScene;
         public PlaceObjectSceneState placeObjectUIScene;
         public RoundSceneState roundUIScene;
+        public RankSceneState rankSceneState;
+        public ResultSceneState resultSceneState;
 
-        public GameObject test_characterSprite;
+        protected override IDefaultSceneState observable => this;
 
-        private ObjectSelectionSceneState activeObjectSelectionUIScene;
-        private PlaceObjectSceneState activePlaceObjectUIScene;
-        private RoundSceneState activeRoundUIScene;
-
-        private int currentRound;
-
-        private void Awake()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            if (Player.players.Count == 0)
+            Task task = base.OnFocus(unloadedSceneState, result);
+            Type unloadedType = unloadedSceneState?.GetType();
+            if (unloadedSceneState == null)
             {
-                _InsertTestData();
+                OnMapStart();
             }
+            else if (unloadedType == typeof(ObjectSelectionSceneState))
+            {
+                OnObjectSelectionFinished();
+            }
+            else if (unloadedType == typeof(PlaceObjectSceneState))
+            {
+                OnPlaceObjectFinished();
+            }
+            else if (unloadedType == typeof(RoundSceneState))
+            {
+                OnRoundUISceneFinished();
+            }
+            else if (unloadedType == typeof(RankSceneState))
+            {
+                OnRankFinished();
+            }
+            else if (unloadedType == typeof(ResultSceneState))
+            {
+                OnResultFinished();
+            }
+            return task;
         }
 
-        protected override void OnLoad()
+        private void OnMapStart()
         {
-            base.OnLoad();
+            OnRankFinished();
         }
 
-        protected override void OnActivate()
+        private void OnObjectSelectionFinished()
         {
-            base.OnActivate();
-            if (activeObjectSelectionUIScene != null)
+            arg.roundStats[arg.currentRound].state = RoundState.PlacingObjects;
+            SceneStateManager.instance.Push(placeObjectUIScene, arg);
+        }
+
+        private void OnPlaceObjectFinished()
+        {
+            arg.roundStats[arg.currentRound].state = RoundState.Playing;
+            SceneStateManager.instance.Push(roundUIScene, arg);
+        }
+
+        private void OnRoundUISceneFinished()
+        {
+            arg.roundStats[arg.currentRound].state = RoundState.Ranking;
+            SceneStateManager.instance.Push(rankSceneState, arg);
+        }
+
+        private readonly List<int> playerPoints = new List<int>();
+        private void OnRankFinished()
+        {
+            if (arg.currentRound >= 0 && arg.currentRound < arg.roundSettings.Count)
+                arg.roundStats[arg.currentRound].state = RoundState.None;
+
+            ++arg.currentRound;
+
+            playerPoints.Clear();
+            playerPoints.AddRange(arg.playerStats.Select((ps, i) => arg
+                    .GetRoundPlayerStatOfPlayer(i)
+                    .SelectMany(rps => rps.scoreChanges)
+                    .Sum(sc => sc.delta)));
+            bool someonePassed = playerPoints.Any(p => p >= arg.passPoints);
+
+            if (arg.currentRound < arg.roundSettings.Count && !someonePassed)
             {
-                OnObjectSelectionUISceneFinished(activeObjectSelectionUIScene);
-                activeObjectSelectionUIScene = null;
-            }
-            else if (activePlaceObjectUIScene != null)
-            {
-                OnPlaceObjectUISceneFinished(activePlaceObjectUIScene);
-                activePlaceObjectUIScene = null;
-            }
-            else if (activeRoundUIScene != null)
-            {
-                OnRoundUISceneFinished(activeRoundUIScene);
-                activeRoundUIScene = null;
+                PushSceneState(objectSelectionUIScene, arg);
+                arg.roundStats[arg.currentRound].state = RoundState.SelectingObjects;
             }
             else
             {
-                StartRound();
+                print("Round Finished!");
+
+                int maxPoints = playerPoints.Max();
+
+                foreach (PlayerStat ps in arg.playerStats.Where((ps, i) => playerPoints[i] == maxPoints))
+                {
+                    ps.wonOverall = true;
+                }
+
+                PushSceneState(resultSceneState, arg);
             }
         }
 
-        private void _InsertTestData()
+        private void OnResultFinished()
         {
-            Player player = new Player
-            {
-                characterSprite = test_characterSprite,
-                name = "Trim",
-                color = Color.blue
-            };
-            player.MapActionToKey(Player.Action.Left, KeyCode.LeftArrow);
-            player.MapActionToKey(Player.Action.Right, KeyCode.RightArrow);
-            player.MapActionToKey(Player.Action.Up, KeyCode.UpArrow);
-            player.MapActionToKey(Player.Action.Down, KeyCode.DownArrow);
-            player.MapActionToKey(Player.Action.Select, KeyCode.Home);
-            player.MapActionToKey(Player.Action.Cancel, KeyCode.End);
-        }
-
-        private void StartRound()
-        {
-            ++currentRound;
-            activeObjectSelectionUIScene = objectSelectionUIScene;
-            SceneStateManager.instance.PushSceneState(objectSelectionUIScene);
-        }
-
-        private void OnObjectSelectionUISceneFinished(ObjectSelectionSceneState objectSelectionUIScene)
-        {
-            SceneStateManager.instance.PushSceneState(placeObjectUIScene);
-            activePlaceObjectUIScene = placeObjectUIScene;
-            activePlaceObjectUIScene.selectedObjects = new Dictionary<Player, GameObject>(objectSelectionUIScene.selectedObjects);
-        }
-
-        private void OnPlaceObjectUISceneFinished(PlaceObjectSceneState placeObjectUIScene)
-        {
-            SceneStateManager.instance.PushSceneState(roundUIScene);
-            activeRoundUIScene = roundUIScene;
-        }
-
-        private void OnRoundUISceneFinished(RoundSceneState roundUIScene)
-        {
-
+            PopSceneState(null);
         }
     }
 }

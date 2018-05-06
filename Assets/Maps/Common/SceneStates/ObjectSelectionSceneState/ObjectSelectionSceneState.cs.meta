@@ -5,7 +5,10 @@ licenseType: Free
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - uiScene: {instanceID: 0}
+  - keyCursorPrefab: {fileID: 114360809816667490, guid: 16f985eb9eb754b448e9c29b90240ee0,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

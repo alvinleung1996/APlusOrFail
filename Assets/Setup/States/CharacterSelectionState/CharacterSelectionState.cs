@@ -1,90 +1,103 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.CharacterSelectionState
+namespace APlusOrFail.Setup.SceneStates
 {
     using Character;
+    using Components;
 
-    public class CharacterSelectionState : SceneState
+    public class CharacterSelectionState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, Void>
     {
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public Text messageText;
         public Button cancelButton;
 
-        public GameObject originalCharacter { get; set; }
-
-        public bool cancelled { get; private set; }
-        public GameObject selectedCharacter { get; private set; }
+        private Transform originalCharacter;
         
 
-        private void Start()
+        private void Awake()
         {
-            foreach (Selectable selectable in FindObjectsOfType<Selectable>())
-            {
-                selectable.OnSelected += OnCharactedSelected;
-            }
+            
             cancelButton.onClick.AddListener(OnCancelButtonClicked);
-            HideUI();
+            uiScene.gameObject.SetActive(false);
+        }
+        
+        public override Task OnLoad(SceneStateManager sceneStateManager, ValueTuple<ISetupData, IPlayerSetting> arg)
+        {
+            Task task = base.OnLoad(sceneStateManager, arg);
+            foreach (Transform selectable in arg.Item1.characterPlayerSettingMap.Keys)
+            {
+                selectable.GetComponent<Selectable>().onSelected += OnCharactedSelected;
+            }
+            return task;
         }
 
-        protected override void OnLoad()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            cancelled = false;
-            selectedCharacter = null;
+            Task task = base.OnFocus(unloadedSceneState, result);
+            uiScene.gameObject.SetActive(true);
+            foreach (Transform character in arg.Item1.characterPlayerSettingMap.Keys) AutoResizeCamera.instance.Trace(character);
+            originalCharacter = arg.Item2.character;
+            return task;
         }
 
-        protected override void OnActivate()
+        public override Task OnBlur()
         {
-            ShowUI();
+            Task task = base.OnBlur();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
+            originalCharacter = null;
+            return task;
         }
 
-        protected override void OnDeactivate()
+        public override Task OnUnload()
         {
-            HideUI();
+            Task task = base.OnUnload();
+            foreach (Transform selectable in arg.Item1.characterPlayerSettingMap.Keys)
+            {
+                selectable.GetComponent<Selectable>().onSelected -= OnCharactedSelected;
+            }
+            return task;
         }
 
         private void OnCancelButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                cancelled = true;
-                SceneStateManager.instance.PopSceneState();
+                PopSceneState(null);
             }
         }
 
         private void OnCharactedSelected(Selectable selectedChar)
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                CharacterPlayer selectedCharPlayer = selectedChar.GetComponent<CharacterPlayer>();
-                if (selectedChar.gameObject != originalCharacter && selectedCharPlayer.player != null)
+                ISetupData setupData = arg.Item1;
+                IPlayerSetting playerSetting = arg.Item2;
+
+                if (ReferenceEquals(selectedChar.transform, originalCharacter))
                 {
-                    messageText.text = "Character has been selected!";
+                    PopSceneState(null);
+                }
+                else if (setupData.characterPlayerSettingMap[selectedChar.transform] == null)
+                {
+                    setupData.characterPlayerSettingMap[playerSetting.character] = null;
+                    playerSetting.character.GetComponent<CharacterPlayer>().playerSetting = null;
+
+                    setupData.characterPlayerSettingMap[selectedChar.transform] = playerSetting;
+                    selectedChar.GetComponent<CharacterPlayer>().playerSetting = playerSetting;
+                    playerSetting.character = selectedChar.transform;
+                    playerSetting.characterSpriteId = selectedChar.GetComponent<CharacterSpriteId>().spriteId;
+
+                    PopSceneState(null);
                 }
                 else
                 {
-                    selectedCharacter = selectedChar.gameObject;
-                    if (selectedChar.gameObject != originalCharacter)
-                    {
-                        CharacterPlayer originalCharPlayer = originalCharacter.GetComponent<CharacterPlayer>();
-                        selectedCharPlayer.player = originalCharPlayer.player;
-                        originalCharPlayer.player = null;
-                        selectedCharPlayer.player.characterSprite = selectedChar.GetComponent<CharacterSprite>().overrideCharacterSprite;
-                    }
-                    SceneStateManager.instance.PopSceneState();
+                    messageText.text = "Character has been selected!";
                 }
-                
             }
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
-        }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
         }
     }
 }

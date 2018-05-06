@@ -1,150 +1,89 @@
-﻿using System.Linq;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 {
-    using KeyCursorController;
     using Objects;
-    using ObjectGrid;
-
-    [RequireComponent(typeof(KeyCursorController))]
-    public class PlaceObjectSceneState : SceneState
+    
+    public class PlaceObjectSceneState : ObservableSceneStateBehavior<IMapStat, Void, IPlaceObjectSceneState>, IPlaceObjectSceneState
     {
-        private class ObjectData
-        {
-            public readonly GameObject obj;
-            public readonly ObjectGridSize objectGridSize;
-
-            public ObjectData(GameObject obj)
-            {
-                this.obj = obj;
-                objectGridSize = obj.GetComponent<ObjectGridSize>();
-            }
-        }
-
+        private new Camera camera;
         public RectTransform uiScene;
+        public ObjectCursor cursorPrefab;
 
-        public IDictionary<Player, GameObject> selectedObjects;
+        private readonly List<ObjectCursor> objectCursors = new List<ObjectCursor>();
+        protected override IPlaceObjectSceneState observable => this;
 
-        private KeyCursorController keyCursorController;
-
-        private readonly Dictionary<KeyCursorController.KeyCursor, ObjectData> keyCursorObjects = new Dictionary<KeyCursorController.KeyCursor, ObjectData>();
-        private KeyValuePair<KeyCursorController.KeyCursor, ObjectData>[] keyCursorObjectsForUpdate;
-        private bool keyCursorObjectsModified;
 
         private void Start()
         {
-            keyCursorController = GetComponent<KeyCursorController>();
+            camera = Camera.main;
             HideUI();
         }
 
-        protected override void OnLoad()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            base.OnLoad();
-
-        }
-
-        protected override void OnActivate()
-        {
-            base.OnActivate();
+            Task task = base.OnFocus(unloadedSceneState, result);
             ShowUI();
+            return task;
         }
 
-        protected override void OnDeactivate()
+        public override Task OnBlur()
         {
-            base.OnDeactivate();
+            Task task = base.OnBlur();
             HideUI();
+            return task;
         }
 
         private void ShowUI()
         {
             uiScene.gameObject.SetActive(true);
 
-            foreach (KeyValuePair<Player, GameObject> pair in selectedObjects)
+            for (int i = 0; i < arg.playerStats.Count; ++i)
             {
-                AddKeyCursorWithObject(pair.Key, pair.Value);
+                IReadOnlyRoundPlayerStat roundPlayerStat = arg.roundPlayerStats[arg.currentRound, i];
+                if (roundPlayerStat.selectedObjectPrefab != null)
+                {
+                    ObjectCursor cursor = Instantiate(cursorPrefab, uiScene);
+                    cursor.player = arg.playerStats[i];
+                    cursor.objectPrefab = roundPlayerStat.selectedObjectPrefab;
+                    cursor.camera = camera;
+                    cursor.onCursorDestroyed += OnObjectCursorDestroyed;
+                    objectCursors.Add(cursor);
+                }
+            }
+            if (objectCursors.Count == 0)
+            {
+                SceneStateManager.instance.Pop(this, null);
             }
         }
 
         private void HideUI()
         {
             uiScene.gameObject.SetActive(false);
-            foreach (KeyValuePair<KeyCursorController.KeyCursor, ObjectData> pair in keyCursorObjects)
+            for (int i = objectCursors.Count - 1; i >= 0; --i)
             {
-                pair.Key.Remove();
-                keyCursorObjects.Remove(pair.Key);
-                Destroy(pair.Value.obj);
-                keyCursorObjectsModified = true;
-            }
-            if (keyCursorObjectsModified) keyCursorObjects.Clear();
-        }
-
-        private void AddKeyCursorWithObject(Player player, GameObject objectPrefab)
-        {
-            KeyCursorController.KeyCursor keyCursor = keyCursorController.AddKeyCursor(player);
-            GameObject obj = Instantiate(objectPrefab);
-            keyCursorObjects.Add(keyCursor, new ObjectData(obj));
-            keyCursorObjectsModified = true;
-        }
-
-        private void RemoveKeyCursorWithObject(KeyCursorController.KeyCursor keyCursor)
-        {
-            ObjectData objectData;
-            if (keyCursorObjects.TryGetValue(keyCursor, out objectData))
-            {
-                keyCursor.Remove();
-                Destroy(objectData.obj);
-                keyCursorObjects.Remove(keyCursor);
-                keyCursorObjectsModified = true;
+                ObjectCursor cursor = objectCursors[i];
+                RemoveObjectCursor(cursor);
+                Destroy(cursor);
             }
         }
 
-        private void Update()
+        private void RemoveObjectCursor(ObjectCursor cursor)
         {
-            if (keyCursorObjectsModified)
-            {
-                keyCursorObjectsForUpdate = keyCursorObjects.Count > 0 ? keyCursorObjects.ToArray() : null;
-                keyCursorObjectsModified = false;
-            }
-            if (state.IsAtLeast(State.Activated) && keyCursorObjectsForUpdate != null)
-            {
-                foreach (KeyValuePair<KeyCursorController.KeyCursor, ObjectData> pair in keyCursorObjectsForUpdate)
-                {
-                    RectInt gridRect = ObjectGrid.instance.SnapToGrid(
-                        ObjectGrid.instance.WorldToGridCoordinate(pair.Key.location),
-                        new Vector2Int(pair.Value.objectGridSize.width, pair.Value.objectGridSize.height)
-                    );
-
-                    pair.Value.obj.transform.position = ObjectGrid.instance.GridRectToRect(gridRect).center;
-
-                    bool placeable = ObjectGrid.instance.IsPlaceable(gridRect);
-                    if (placeable)
-                    {
-                        Debug.LogFormat("Can place!");
-                    }
-                    else
-                    {
-                        Debug.LogFormat("Cannot place!");
-                    }
-
-                    if (placeable && HasKeyUp(pair.Key.player, Player.Action.Select))
-                    {
-                        RemoveKeyCursorWithObject(pair.Key);
-                        ObjectGrid.instance.AddToGrid(gridRect, pair.Value.obj.GetComponent<ObjectPrefabInfo>().prefabLink.prefab);
-                        if (keyCursorObjects.Count == 0)
-                        {
-                            SceneStateManager.instance.PopSceneState();
-                        }
-                    }
-                }
-            }
+            cursor.onCursorDestroyed -= OnObjectCursorDestroyed;
+            objectCursors.Remove(cursor);
         }
 
-        private bool HasKeyUp(Player player, Player.Action action)
+        private void OnObjectCursorDestroyed(ObjectCursor cursor)
         {
-            KeyCode? code = player.GetKeyForAction(action);
-            return code != null && Input.GetKeyUp(code.Value);
+            RemoveObjectCursor(cursor);
+            if (objectCursors.Count == 0)
+            {
+                SceneStateManager.instance.Pop(this, null);
+            }
         }
     }
 }

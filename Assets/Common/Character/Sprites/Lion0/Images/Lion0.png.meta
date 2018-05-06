@@ -9,6 +9,10 @@ TextureImporter:
     21300004: Lion0_UpperHand
     21300006: Lion0_Tail
     21300008: Lion0_LowerArm
+    21300010: Lion0_Eye_Alive
+    21300012: Lion0_Eye_Dead
+    21300014: Lion0_Mouth_Alive
+    21300016: Lion0_Mouth_Dead
   externalObjects: {}
   serializedVersion: 4
   mipmaps:
@@ -150,6 +154,62 @@ TextureImporter:
         height: 63
       alignment: 9
       pivot: {x: 0.5, y: 0.74839765}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: Lion0_Eye_Alive
+      rect:
+        serializedVersion: 2
+        x: 273
+        y: 432
+        width: 27
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: Lion0_Eye_Dead
+      rect:
+        serializedVersion: 2
+        x: 372
+        y: 435
+        width: 24
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: Lion0_Mouth_Alive
+      rect:
+        serializedVersion: 2
+        x: 278
+        y: 355
+        width: 63
+        height: 58
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+    - serializedVersion: 2
+      name: Lion0_Mouth_Dead
+      rect:
+        serializedVersion: 2
+        x: 367
+        y: 357
+        width: 59
+        height: 54
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []

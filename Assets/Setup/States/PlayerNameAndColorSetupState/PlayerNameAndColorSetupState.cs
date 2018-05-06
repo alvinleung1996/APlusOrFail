@@ -1,24 +1,23 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
+namespace APlusOrFail.Setup.SceneStates
 {
-    using Character;
+    using Components;
 
-    public class PlayerNameAndColorSetupState : SceneState
+    public class PlayerNameAndColorSetupState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, ValueTuple<IPlayerSetting, bool>>
     {
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public InputField nameInputField;
         public List<ColorButton> colorButtons;
         public Button enterButton;
         public Button cancelButton;
-        
-        public GameObject character { get; set; }
-        public bool cancelled { get; private set; }
 
-        private Player player;
-        private Color color;
+        private string originalName;
+        private Color originalColor;
         
         private void Start()
         {
@@ -28,68 +27,56 @@ namespace APlusOrFail.Setup.States.PlayerNameAndColorSetupState
             {
                 button.onSelected += OnColorButtonSelected;
             }
-            HideUI();
+            uiScene.gameObject.SetActive(false);
         }
 
-        protected override void OnLoad()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            cancelled = false;
-            player = character.GetComponent<CharacterPlayer>().player;
-            color = player.color;
-            nameInputField.text = player.name;
+            Task task = base.OnFocus(unloadedSceneState, result);
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
+            originalName = arg.Item2.name;
+            originalColor = arg.Item2.color;
+            nameInputField.text = originalName;
+            nameInputField.Select();
+            return task;
         }
 
-        protected override void OnActivate()
+        public override Task OnBlur()
         {
-            ShowUI();
-        }
-
-        protected override void OnDeactivate()
-        {
-            HideUI();
-        }
-
-        protected override void OnUnLoad()
-        {
-            player = null;
+            Task task = base.OnBlur();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
+            return task;
         }
 
         private void OnColorButtonSelected(ColorButton button)
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                color = button.color;
+                arg.Item2.color = button.color;
             }
         }
 
         private void OnEnterButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                player.name = nameInputField.text;
-                player.color = color;
-                SceneStateManager.instance.PopSceneState();
+                arg.Item2.name = nameInputField.text;
+                arg.Item2.ApplyProperties();
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, true));
             }
         }
 
         private void OnCancelButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                cancelled = true;
-                SceneStateManager.instance.PopSceneState();
+                arg.Item2.name = originalName;
+                arg.Item2.color = originalColor;
+                arg.Item2.ApplyProperties();
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, false));
             }
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
-        }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-            nameInputField.Select();
         }
     }
 }

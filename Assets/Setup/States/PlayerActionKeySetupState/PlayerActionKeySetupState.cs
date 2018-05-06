@@ -1,141 +1,126 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using UnityEngine.UI;
+using UnityEngine;
 
-namespace APlusOrFail.Setup.States.PlayerActionKeySetupState
+namespace APlusOrFail.Setup.SceneStates
 {
-    using Character;
+    using Components;
 
-    public class PlayerActionKeySetupState : SceneState
+    public class PlayerActionKeySetupState : SceneStateBehavior<ValueTuple<ISetupData, IPlayerSetting>, ValueTuple<IPlayerSetting, bool>>
     {
-        private static readonly ReadOnlyCollection<Player.Action> actionSequence = new ReadOnlyCollection<Player.Action>(new Player.Action[]{
-            Player.Action.Left,
-            Player.Action.Right,
-            Player.Action.Up,
-            Player.Action.Down,
-            Player.Action.Select,
-            Player.Action.Cancel
+        private static readonly ReadOnlyCollection<PlayerAction> actionSequence = new ReadOnlyCollection<PlayerAction>(new PlayerAction[] {
+            PlayerAction.Left,
+            PlayerAction.Right,
+            PlayerAction.Up,
+            PlayerAction.Down,
+            PlayerAction.Action1,
+            PlayerAction.Action2
         });
 
-        private static string TextForAction(Player.Action action)
+        private static string TextForAction(PlayerAction action)
         {
             switch (action)
             {
-                case Player.Action.Left: return "left";
-                case Player.Action.Right: return "right";
-                case Player.Action.Up: return "jump";
-                case Player.Action.Down: return "squat";
-                case Player.Action.Select: return "select";
-                case Player.Action.Cancel: return "cancel";
+                case PlayerAction.Left: return "left";
+                case PlayerAction.Right: return "right";
+                case PlayerAction.Up: return "jump";
+                case PlayerAction.Down: return "squat";
+                case PlayerAction.Action1: return "action1";
+                case PlayerAction.Action2: return "action2";
                 default: return "";
             }
         }
 
 
-        public RectTransform uiScene;
+        public Canvas uiScene;
         public Text enterKeyMessageText;
         public Button cancelButton;
 
-        public GameObject character { get; set; }
-        public bool cancelled { get; private set; }
+        private readonly Dictionary<PlayerAction, KeyCode> originalActionMap = new Dictionary<PlayerAction, KeyCode>();
+        private Coroutine runningCoroutine;
 
-        private CharacterPlayer charPlayer;
-        private Dictionary<Player.Action, KeyCode> actionKeyMap;
-        private int setupingActionIndex = 0;
-
-
-        private void Start()
+        private void Awake()
         {
+            uiScene.gameObject.SetActive(false);
             cancelButton.onClick.AddListener(OnCancelButtonClicked);
-            HideUI();
         }
 
-        protected override void OnLoad()
+        public override Task OnFocus(ISceneState unloadedSceneState, object result)
         {
-            charPlayer = character.GetComponent<CharacterPlayer>();
-            actionKeyMap = new Dictionary<Player.Action, KeyCode>();
-            setupingActionIndex = 0;
-
-            cancelled = false;
+            Task task = base.OnFocus(unloadedSceneState, result);
+            uiScene.gameObject.SetActive(true);
+            AutoResizeCamera.instance.Trace(arg.Item2.character);
+            foreach (var pair in arg.Item2.actionMap) originalActionMap.Add(pair.Key, pair.Value);
+            runningCoroutine = StartCoroutine(RegisterKeyCoroutine());
+            return task;
         }
 
-        protected override void OnActivate()
+        public override Task OnBlur()
         {
-            ShowUI();
-            enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[setupingActionIndex])}";
+            Task task = base.OnBlur();
+            uiScene.gameObject.SetActive(false);
+            AutoResizeCamera.instance.UntraceAll();
+            originalActionMap.Clear();
+            return task;
         }
 
-        protected override void OnDeactivate()
+        private IEnumerator RegisterKeyCoroutine()
         {
-            HideUI();
-        }
+            ISetupData setupData = arg.Item1;
+            IPlayerSetting playerSetting = arg.Item2;
+            
+            arg.Item1.UnmapAllActionFromKey(arg.Item2);
 
-        protected override void OnUnLoad()
-        {
-            charPlayer = null;
-            actionKeyMap = null;
-        }
-
-        private void Update()
-        {
-            if (state.IsAtLeast(State.Activated))
+            for (int i = 0; i < actionSequence.Count; ++i)
             {
-                KeyCode? key = KeyDetector.GetKeyDowned();
-                if (key != null)
+                enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[i])}";
+
+                KeyCode key;
+                while (true)
                 {
-                    OnKeyDown(key.Value);
-                }
-            }
-        }
-
-        private void OnKeyDown(KeyCode key)
-        {
-            if (PlayerInputRegistry.HasRegisteredByOther(key, charPlayer.player))
-            {
-                enterKeyMessageText.text = "The key has already used by other player!";
-            }
-            else if (actionKeyMap.ContainsValue(key))
-            {
-                enterKeyMessageText.text = "The key is used for other action!";
-            }
-            else
-            {
-                actionKeyMap[actionSequence[setupingActionIndex]] = key;
-                ++setupingActionIndex;
-                if (setupingActionIndex < actionSequence.Count)
-                {
-                    enterKeyMessageText.text = $"Key for {TextForAction(actionSequence[setupingActionIndex])}";
-                }
-                else
-                {
-                    charPlayer.player.UnmapAllActionFromKey();
-                    foreach (KeyValuePair<Player.Action, KeyCode> pair in actionKeyMap)
+                    yield return null;
+                    key = KeyDetector.GetKeyDowned();
+                    if (key != KeyCode.None)
                     {
-                        charPlayer.player.MapActionToKey(pair.Key, pair.Value);
+                        IPlayerSetting registeredPlayerSetting;
+                        if (setupData.keyPlayerMap.TryGetValue(key, out registeredPlayerSetting))
+                        {
+                            if (registeredPlayerSetting == playerSetting)
+                            {
+                                enterKeyMessageText.text = "The key is used for other action!";
+                            }
+                            else
+                            {
+                                enterKeyMessageText.text = "The key has already used by other player!";
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    SceneStateManager.instance.PopSceneState();
                 }
+
+                setupData.MapActionToKey(playerSetting, actionSequence[i], key);
             }
+
+            PopSceneState(new ValueTuple<IPlayerSetting, bool>(playerSetting, true));
         }
 
         private void OnCancelButtonClicked()
         {
-            if (state.IsAtLeast(State.Activated))
+            if (phase.IsAtLeast(SceneStatePhase.Focused))
             {
-                SceneStateManager.instance.PopSceneState();
-                cancelled = true;
+                PopSceneState(new ValueTuple<IPlayerSetting, bool>(arg.Item2, false));
+                arg.Item1.UnmapAllActionFromKey(arg.Item2);
+                foreach (var pair in originalActionMap) arg.Item1.MapActionToKey(arg.Item2, pair.Key, pair.Value);
+                StopCoroutine(runningCoroutine);
+                runningCoroutine = null;
             }
-        }
-
-        private void ShowUI()
-        {
-            uiScene.gameObject.SetActive(true);
-        }
-
-        private void HideUI()
-        {
-            uiScene.gameObject.SetActive(false);
         }
     }
 }

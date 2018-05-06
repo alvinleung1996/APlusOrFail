@@ -1,128 +1,63 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using UnityEngine;
 
 namespace APlusOrFail
 {
-    public class Player
+    public enum PlayerAction
     {
-        public enum Action
+        Left,
+        Right,
+        Up,
+        Down,
+        Action1,
+        Action2
+    }
+
+    public interface IReadOnlySharedPlayerSetting
+    {
+        int id { get; }
+        string name { get; }
+        Color color { get; }
+        int characterSpriteId { get; }
+        IReadOnlyDictionary<PlayerAction, KeyCode> actionMap { get; }
+    }
+
+    public static class PlayerSettingExtensions
+    {
+        public static bool HasKeyForAction(this IReadOnlySharedPlayerSetting playerSetting, PlayerAction action)
         {
-            Left,
-            Right,
-            Up,
-            Down,
-            Select,
-            Cancel
+            return playerSetting.actionMap.ContainsKey(action);
         }
 
-
-        private static int playerAutoId = 1;
-        private static readonly List<Player> playerList = new List<Player>();
-        public static readonly ReadOnlyCollection<Player> players = new ReadOnlyCollection<Player>(playerList);
-
-
-        public int id { get; set; }
-
-        private string _name;
-        public string name
-        {
-            get
-            {
-                return _name;
-            }
-            set
-            {
-                _name = value;
-                onNameChanged?.Invoke(this, value);
-            }
-        }
-        public event EventHandler<Player, string> onNameChanged;
-
-        private Color _color = Color.white;
-        public Color color
-        {
-            get
-            {
-                return _color;
-            }
-            set
-            {
-                _color = value;
-                onColorChanged?.Invoke(this, value);
-            }
-        }
-        public event EventHandler<Player, Color> onColorChanged;
-
-        private GameObject _characterSprite;
-        public GameObject characterSprite
-        {
-            get
-            {
-                return _characterSprite;
-            }
-            set
-            {
-                _characterSprite = value;
-                onCharacterSpriteChanged?.Invoke(this, value);
-            }
-        }
-        public event EventHandler<Player, GameObject> onCharacterSpriteChanged;
-        
-        private readonly Dictionary<Action, KeyCode> actionMap = new Dictionary<Action, KeyCode>();
-        
-
-
-        public Player()
-        {
-            id = playerAutoId++;
-            name = $"Player {id}";
-            playerList.Add(this);
-        }
-
-        public bool HasKeyForAction(Action action)
-        {
-            return actionMap.ContainsKey(action);
-        }
-
-        public KeyCode? GetKeyForAction(Action action)
+        public static KeyCode GetKeyForAction(this IReadOnlySharedPlayerSetting playerSetting, PlayerAction action)
         {
             KeyCode key;
-            return actionMap.TryGetValue(action, out key) ? (KeyCode?)key : null;
+            return playerSetting.actionMap.TryGetValue(action, out key) ? key : KeyCode.None;
         }
+    }
+    
 
-        public void MapActionToKey(Action action, KeyCode key)
-        {
-            PlayerInputRegistry.RegisterKey(key, this);
-            actionMap[action] = key;
-        }
+    public class ReadOnlySharedPlayerSetting : IReadOnlySharedPlayerSetting
+    {
+        public int id { get; }
+        public string name { get; }
+        public Color color { get; }
+        public int characterSpriteId { get; }
+        public IReadOnlyDictionary<PlayerAction, KeyCode> actionMap { get; }
 
-        public void UnmapActionFromKey(Action action)
-        {
-            KeyCode key;
-            if (actionMap.TryGetValue(action, out key))
-            {
-                PlayerInputRegistry.UnregisterKey(key, this);
-                actionMap.Remove(action);
-            }
-            
-        }
+        public ReadOnlySharedPlayerSetting(IReadOnlySharedPlayerSetting playerSetting)
+            : this(playerSetting.id, playerSetting.name, playerSetting.color, playerSetting.characterSpriteId, playerSetting.actionMap) { }
 
-        public void UnmapAllActionFromKey()
+        public ReadOnlySharedPlayerSetting(int id, string name, Color color, int characterId,
+            IReadOnlyDictionary<PlayerAction, KeyCode> actionMap)
         {
-            foreach (KeyCode key in actionMap.Values)
-            {
-                PlayerInputRegistry.UnregisterKey(key, this);
-            }
-            actionMap.Clear();
+            this.id = id;
+            this.name = name;
+            this.color = color;
+            this.characterSpriteId = characterId;
+            this.actionMap = actionMap.ToDictionary(p => p.Key, p => p.Value);
         }
-
-        public void Delete()
-        {
-            playerList.Remove(this);
-            UnmapAllActionFromKey();
-            onDelete?.Invoke(this);
-        }
-        public event EventHandler<Player> onDelete;
     }
 }
