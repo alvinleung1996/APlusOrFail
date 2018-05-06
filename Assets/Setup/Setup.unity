@@ -816,7 +816,7 @@ GameObject:
   m_Component:
   - component: {fileID: 193227799}
   - component: {fileID: 193227807}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: SceneStateManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -867,15 +867,15 @@ GameObject:
   m_Component:
   - component: {fileID: 232679245}
   - component: {fileID: 232679246}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: PlayerActionKeySetupScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &232679245
-RectTransform:
+--- !u!4 &232679245
+Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -888,11 +888,6 @@ RectTransform:
   m_Father: {fileID: 193227799}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &232679246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1044,7 +1039,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4069326762434768, guid: 5b64db52af48f4244aa54925d0b987a3, type: 2}
       propertyPath: m_LocalPosition.x
-      value: 15
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 4069326762434768, guid: 5b64db52af48f4244aa54925d0b987a3, type: 2}
       propertyPath: m_LocalPosition.y
@@ -1081,7 +1076,7 @@ Prefab:
     - target: {fileID: 114819285321874754, guid: 5b64db52af48f4244aa54925d0b987a3,
         type: 2}
       propertyPath: _gridPosition.x
-      value: 15
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 114819285321874754, guid: 5b64db52af48f4244aa54925d0b987a3,
         type: 2}
@@ -2159,15 +2154,15 @@ GameObject:
   m_Component:
   - component: {fileID: 613588794}
   - component: {fileID: 613588796}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: PlayerNameAndColorSetupUIScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &613588794
-RectTransform:
+--- !u!4 &613588794
+Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -2180,11 +2175,6 @@ RectTransform:
   m_Father: {fileID: 193227799}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &613588796
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2242,7 +2232,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4796656134600036, guid: a9576f3f13e858b4d989140d83047b21, type: 2}
       propertyPath: m_RootOrder
-      value: 2
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: a9576f3f13e858b4d989140d83047b21, type: 2}
@@ -3033,7 +3023,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 500, y: 500}
+  m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &905012621
 MonoBehaviour:
@@ -3077,7 +3067,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1027608013}
   - component: {fileID: 1027608012}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: DefaultUIScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3104,8 +3094,8 @@ MonoBehaviour:
   actionKeySetupUIScene: {fileID: 232679246}
   charOptionUIScene: {fileID: 2039622880}
   countDownTime: 5
---- !u!224 &1027608013
-RectTransform:
+--- !u!4 &1027608013
+Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -3118,11 +3108,6 @@ RectTransform:
   m_Father: {fileID: 193227799}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1035252590 stripped
 MonoBehaviour:
   m_PrefabParentObject: {fileID: 114899727310536492, guid: ad048609227e48145b5cc9a6a6ff56d5,
@@ -3679,15 +3664,15 @@ GameObject:
   m_Component:
   - component: {fileID: 1181030746}
   - component: {fileID: 1181030747}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: CharacterSelectionScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &1181030746
-RectTransform:
+--- !u!4 &1181030746
+Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -3700,11 +3685,6 @@ RectTransform:
   m_Father: {fileID: 193227799}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1181030747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4591,11 +4571,6 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 114835233787858334, guid: 4e1a1761b59cf4d4eadb021d81052afa,
-        type: 2}
-      propertyPath: _gridPosition.x
-      value: 13
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4e1a1761b59cf4d4eadb021d81052afa, type: 2}
   m_IsPrefabParent: 0
@@ -5340,7 +5315,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4921735319922178, guid: e1b270c1bd1ca3b4786b40422fa27814, type: 2}
       propertyPath: m_RootOrder
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 20822678448212586, guid: e1b270c1bd1ca3b4786b40422fa27814,
         type: 2}
@@ -5660,15 +5635,15 @@ GameObject:
   m_Component:
   - component: {fileID: 2039622879}
   - component: {fileID: 2039622880}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: CharacterOptionsScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &2039622879
-RectTransform:
+--- !u!4 &2039622879
+Transform:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
@@ -5681,11 +5656,6 @@ RectTransform:
   m_Father: {fileID: 193227799}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2039622880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5817,7 +5787,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4998443419786832, guid: ce9d976019abd614f86d19f192412551, type: 2}
       propertyPath: m_RootOrder
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 61406832508611878, guid: ce9d976019abd614f86d19f192412551,
         type: 2}

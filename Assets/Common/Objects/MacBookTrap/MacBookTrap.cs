@@ -39,7 +39,7 @@ namespace APlusOrFail.Objects
         private Animator animator;
         public SpriteRenderer screenRenderer;
         public Color damgerousColor = Color.red;
-        public float waitingTime = 2;
+        public float waitingTime = 1;
 
         private PlaySceneStateObserver playSceneStateObserver;
         private bool isPlaying;

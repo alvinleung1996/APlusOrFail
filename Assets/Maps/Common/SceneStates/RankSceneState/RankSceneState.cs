@@ -8,10 +8,11 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
     public class RankSceneState : ObservableSceneStateBehavior<IMapStat, Void, IRankSceneState>, IRankSceneState
     {
         public Canvas canvas;
+        public ScoreBoardAnimationController scoreBoardAnimationController;
         public Regions regions;
         public PlayerScores playerScores;
         public TooEasyNoPointBanner tooEasyBanner;
-
+        
         private readonly List<IReadOnlySharedPlayerSetting> waitingPlayers = new List<IReadOnlySharedPlayerSetting>();
         protected override IRankSceneState observable => this;
         private bool poped;
@@ -67,15 +68,17 @@ namespace APlusOrFail.Maps.SceneStates.RankSceneState
             canvas.gameObject.SetActive(true);
             regions.UpdateRegions(arg);
             playerScores.UpdatePlayerScoreList(arg);
+            await scoreBoardAnimationController.Open();
             await tooEasyBanner.UpdateBanner(arg.roundStats[arg.currentRound]);
         }
 
         private async Task HideUI()
         {
-            canvas.gameObject.SetActive(false);
+            await tooEasyBanner.UpdateBanner(null);
+            await scoreBoardAnimationController.Close();
             regions.UpdateRegions(null);
             playerScores.UpdatePlayerScoreList(null);
-            await tooEasyBanner.UpdateBanner(null);
+            canvas.gameObject.SetActive(false);
         }
 
         private bool HasKeyUp(IReadOnlySharedPlayerSetting player, PlayerAction action)

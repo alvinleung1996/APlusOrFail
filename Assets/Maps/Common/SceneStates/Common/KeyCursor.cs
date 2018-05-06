@@ -11,29 +11,33 @@ namespace APlusOrFail.Maps.SceneStates
         public Text nameText;
 
         private IReadOnlySharedPlayerSetting _player;
-        public IReadOnlySharedPlayerSetting player {
-            get
-            {
-                return _player;
-            }
-            set
-            {
-                if (_player != value)
-                {
-                    _player = value;
-                    UpdateNameTag();
-                }
-            }
-        }
+        public IReadOnlySharedPlayerSetting player { get { return _player; } set { SetProperty(ref _player, value); } }
+
         public float speed { get; set; } = 0.3f;
         
         public Vector2 viewportLocation => rectTransform != null ? rectTransform.anchorMin : Vector2.zero;
 
 
-        protected virtual void Start()
+        private void SetProperty<T>(ref T property, T value)
+        {
+            if (!Equals(property, value))
+            {
+                property = value;
+                ApplyProperties();
+            }
+        }
+
+        protected virtual void Awake()
         {
             rectTransform = GetComponent<RectTransform>();
-            UpdateNameTag();
+            ApplyProperties();
+        }
+
+        protected void ApplyProperties()
+        {
+            nameBackground.gameObject.SetActive(player != null);
+            nameText.text = player?.name ?? "";
+            nameText.color = player?.color ?? Color.white;
         }
 
         protected virtual void Update()
@@ -71,16 +75,6 @@ namespace APlusOrFail.Maps.SceneStates
                 }
 
                 rectTransform.anchorMin = rectTransform.anchorMax = currentLocation;
-            }
-        }
-
-        protected void UpdateNameTag()
-        {
-            if (nameBackground != null)
-            {
-                nameBackground.gameObject.SetActive(player != null);
-                nameText.text = player?.name ?? "";
-                nameText.color = player?.color ?? Color.white;
             }
         }
 

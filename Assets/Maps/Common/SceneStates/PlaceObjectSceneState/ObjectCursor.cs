@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 {
@@ -56,6 +57,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             }
         }
 
+        public Image forbiddenSign;
         [NonSerialized] public new Camera camera;
         [NonSerialized] public ObjectPrefabInfo objectPrefab;
 
@@ -72,10 +74,9 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
 
         public event EventHandler<ObjectCursor> onCursorDestroyed;
 
-        protected override void Start()
-        {
-            base.Start();
 
+        private void Start()
+        {
             attachedObject = Instantiate(objectPrefab, MapArea.instance.transform);
 
             IObjectPlayerSource playerSource = attachedObject.GetComponent<IObjectPlayerSource>();
@@ -110,6 +111,7 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
                 else if (downKey.uped) customizeAction = 2;
                 else if (rightKey.uped) customizeAction = 3;
             }
+
             if (customizeAction >= 0)
             {
                 action2Key.CancelUp();
@@ -119,23 +121,15 @@ namespace APlusOrFail.Maps.SceneStates.PlaceObjectSceneState
             {
                 objectPlacer.rotation = (MapGridRectExtensions.Rotation)(((int)objectPlacer.rotation + 1) % 4);
             }
-
-            if (!action2Key.pressed)
+            else if (!action2Key.pressed)
             {
                 base.Update();
             }
             
+
             objectPlacer.gridPosition = MapArea.instance.WorldToGridPosition(camera.ViewportToWorldPoint(viewportLocation));
             bool placable = objectPlacer.IsRegisterable();
-
-            if (placable)
-            {
-                Debug.LogFormat($"Player {player.id} can place!");
-            }
-            else
-            {
-                Debug.LogFormat($"Player {player.id} cannot place!");
-            }
+            forbiddenSign.gameObject.SetActive(!placable);
 
             if (action1Key.uped && placable)
             {

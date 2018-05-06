@@ -16,6 +16,7 @@ namespace APlusOrFail.Character
         private static readonly int animatorSquatHash = Animator.StringToHash("squat");
         private static readonly int animatorSlidingHash = Animator.StringToHash("sliding");
         private static readonly int animatorFaceRightHash = Animator.StringToHash("faceRight");
+        private static readonly int animatorDeadHash = Animator.StringToHash("dead");
         private static readonly int animatorJumpOffsetXHash = Animator.StringToHash("jumpOffsetX");
         private static readonly int animatorJumpOffsetYHash = Animator.StringToHash("jumpOffsetY");
         private static readonly int animatorJumpHash = Animator.StringToHash("jump");
@@ -82,6 +83,7 @@ namespace APlusOrFail.Character
                         value.SetBool(animatorInAirHash, inAir);
                         value.SetBool(animatorSquatHash, squat);
                         value.SetBool(animatorSlidingHash, sliding);
+                        value.SetBool(animatorDeadHash, dead);
                         value.SetFloat(animatorCurrentWheelSpeedHash, targetWheelVelocity);
                         value.SetFloat(animatorGravitationalVelocityHash, gravitionalVelocity);
                     }
@@ -125,6 +127,7 @@ namespace APlusOrFail.Character
             bool squat = false;
             bool sliding = false;
             bool faceRight = this.faceRight;
+            bool dead = health <= 0;
             float targetWheelVelocity = 0;
 
             bool leftInput = HasKeyPressed(PlayerAction.Left);
@@ -272,6 +275,7 @@ namespace APlusOrFail.Character
             this.squat = squat;
             this.sliding = sliding;
             this.faceRight = faceRight;
+            this.dead = dead;
             this.targetWheelVelocity = targetWheelVelocity;
             currentWheelSpeed = Mathf.Abs(wheelJoint.jointSpeed) * Mathf.Deg2Rad * wheelCollider.radius;
             gravitionalVelocity = Vector2.Dot(rigidbody2D.velocity, -Physics2D.gravity.normalized);
@@ -389,6 +393,21 @@ namespace APlusOrFail.Character
                     _faceRight = value;
                     charAnimator.SetBool(animatorFaceRightHash, value);
                     spriteAnimator?.SetBool(animatorFaceRightHash, value);
+                }
+            }
+        }
+
+        private bool _dead;
+        [EditorPropertyField(forceGet = true)] private bool dead
+        {
+            get { return _dead; }
+            set
+            {
+                if (_dead != value)
+                {
+                    _dead = value;
+                    charAnimator.SetBool(animatorDeadHash, value);
+                    spriteAnimator?.SetBool(animatorDeadHash, value);
                 }
             }
         }
